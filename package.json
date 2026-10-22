@@ -12,5 +12,10 @@
     "lint": "pnpm -r --if-present lint",
     "test": "pnpm -r --if-present test",
     "build": "pnpm -r --if-present build"
+  },
+  "pnpm": {
+    "executionEnv": {
+      "nodeVersion": "22.23.4"
+    }
   }
 }
