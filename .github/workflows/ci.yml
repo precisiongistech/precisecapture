@@ -19,6 +19,7 @@ jobs:
   api:
     name: API lint + tests
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
     services:
       db:
         image: imresamu/postgis:16-3.5
@@ -47,7 +48,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install GDAL, GEOS and PROJ
-        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends gdal-bin libgdal-dev libgeos-dev libproj-dev postgresql-client
+        timeout-minutes: 8
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update -q
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y -q --no-install-recommends \
+            gdal-bin libgdal-dev libgeos-dev libproj-dev postgresql-client
 
       - name: Create database roles (same script as docker-compose)
         # Service containers cannot mount init scripts, so run the script against the service.
@@ -80,6 +87,7 @@ jobs:
   web:
     name: Web lint + tests
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
