@@ -154,7 +154,7 @@
     },
     "layerRefs": {
       "type": "array",
-      "description": "Layer ids in the same project, or the literal 'self'.",
+      "description": "Layer keys (project-unique slugs) in the same project, or the literal 'self'.",
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
     }

@@ -10,7 +10,7 @@ Owner: Ben Emunah Aikins · Exported 2026-10-22 from the shared spec doc
 
 **What sets it apart**
 
-- Every capture behaviour is configurable at three levels: org default, layer override, collector toggle. Admins can lock a setting.
+- Every capture behaviour is configurable at four levels: org default, project, layer, collector toggle. Admins can lock a setting at any level.
 - Geometry capture built for professionals: snapping, trace mode, streaming, GPS averaging, accuracy gating, offset points, and external GNSS/RTK receivers.
 - Offline-first on low-end Android, including basemaps and location lookups.
 - Data quality is checked on the device, before upload: topology, duplicates, fake GPS.
@@ -112,7 +112,7 @@ Values are proposals to tune during the pilot.
 
 ## 4. Design principles
 
-1. **Configurable at three levels.** Every capture and form behaviour is a setting. It resolves as org default, then layer/project override, then collector toggle. An admin can lock any setting so collectors cannot change it.
+1. **Configurable at three levels.** Every capture and form behaviour is a setting. It resolves as org default, then project, then layer, then collector toggle. An admin can lock any setting so collectors cannot change it.
 2. **Offline-first.** The app works fully with no network: forms, existing features, basemaps, lookups. Sync is a background task, never a blocker.
 3. **Quality at the point of capture.** Validation, topology checks, duplicate warnings and GPS accuracy rules run on the phone. The web is for review, not cleanup.
 4. **Schema-driven.** The web defines forms and capture behaviour as JSON. The app renders whatever the schema says. New field types ship on both sides from one contract.
@@ -173,7 +173,7 @@ Every row belongs to an organisation, and every feature carries a client-generat
 | membership | user\_id, org\_id, role | Roles: owner, admin, manager, collector, viewer |
 | project | id, org\_id, name, extent, status, settings | Groups layers, members and basemap packs |
 | project\_member | project\_id, user\_id, role, assigned\_area (geometry, optional) | Controls what a collector downloads |
-| layer | id, project\_id, name, geometry\_type (point, line, polygon, none), srid, style, capture\_profile (JSON), current\_schema\_version | One layer = one feature type; its attributes are its form |
+| layer | id, project\_id, name, key (project-unique slug), geometry\_type (point, line, polygon, none), style, capture\_profile (JSON), current\_schema\_version | One layer = one feature type; its attributes are its form. Geometry is always stored in EPSG:4326 |
 | layer\_schema\_version | id, layer\_id, version, attributes (JSON, section 9), published\_at, published\_by | Immutable once published; features record the version they used |
 | layer\_template | id, org\_id, name, geometry\_type, attributes, capture\_profile | Save a layer (e.g. Farms) and reuse it in new projects |
 | feature | id (UUID), layer\_id, geom, attributes (JSONB), schema\_version, version, created\_by, updated\_by, device\_id, created\_at, updated\_at, deleted, status | Geometry in PostGIS (null for no-geometry layers); status = draft, submitted, approved, rejected, sent\_back |
@@ -334,13 +334,13 @@ Sync is push-then-pull over a server sequence number: the device pushes its outb
   "op": "update",
   "entity": "feature",
   "id": "0192efa3-...",
-  "layer_id": "lyr_parcels",
+  "layer_id": "0192ef00-5a1e-7c3b-9d2f-8a4b6c1e2d3f",
   "base_version": 4,
   "schema_version": 3,
   "geom": { "type": "Polygon", "coordinates": [[[-0.187, 5.603], [-0.186, 5.603], [-0.186, 5.604], [-0.187, 5.603]]] },
   "attributes": { "land_use": "residential" },
   "changed_fields": ["geom", "land_use"],
-  "meta": { "device_id": "dev_...", "captured_at": "2026-10-06T10:15:02Z", "gps_accuracy_m": 2.4, "mock_location": false }
+  "meta": { "device_id": "0192ee9a-1b2c-7d4e-8f90-123456789abc", "captured_at": "2026-10-06T10:15:02Z", "gps_accuracy_m": 2.4, "mock_location": false }
 }
 ```
 

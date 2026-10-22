@@ -13,6 +13,9 @@ PreciseCapture is a GIS field data collection platform for Africa. Admins set up
 
 ## Quick start (local)
 
+Prerequisites: Docker Desktop, [uv](https://docs.astral.sh/uv/), Node 22 + pnpm, and GDAL/GEOS/PROJ
+(`brew install gdal geos proj` on macOS; `apt install gdal-bin libgdal-dev libgeos-dev libproj-dev` on Debian/Ubuntu).
+
 ```bash
 cp .env.example .env
 make dev-up          # Postgres/PostGIS, Redis, MinIO, Martin, Mailpit
@@ -20,7 +23,15 @@ make api-install
 make api-migrate
 make api-run         # http://localhost:8000/api/v1/docs
 make web-dev         # http://localhost:5173
+make help            # every target
 ```
+
+If a default port is already taken on your machine (for example a native PostgreSQL on 5432), change
+`DB_PORT` (and the matching `*_DATABASE_URL`s) or the other `*_PORT` variables in `.env`; the
+compose file reads them. `.env` files take comment lines only, not inline comments.
+
+Tests run against the dockerised database (`make api-test`). Tests marked `integration` also need
+Redis from `make dev-up`.
 
 ## Documentation
 

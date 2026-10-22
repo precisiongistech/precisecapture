@@ -21,7 +21,7 @@ These are the parts of PreciseCapture that are easy to get subtly wrong. Follow 
 - `pc_owner` is granted membership of `pc_app` (`GRANT pc_app TO pc_owner`), so tests can `SET ROLE pc_app` and prove RLS really applies.
 - **Test database:**
   - pytest creates it as `pc_owner`, via test settings in which `default` points at `pc_owner`.
-  - PostGIS is pre-installed in `template1` by the init script, so the new test DB already has it.
+  - PostGIS, the schema grants and the `ALTER DEFAULT PRIVILEGES` for `pc_app`/`pc_platform` are applied to `template1` by the init script (default privileges are per database), so the new test DB already carries them and `SET ROLE pc_app` can read the tables migrations create.
   - Isolation tests then run their queries after `SET ROLE pc_app`. Provide a pytest fixture `as_app_role` that does this.
 
 ### Policies
