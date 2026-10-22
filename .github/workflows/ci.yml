@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PC_OWNER_PASSWORD: pc_owner_ci
+  PC_APP_PASSWORD: pc_app_ci
+  PC_PLATFORM_PASSWORD: pc_platform_ci
+  PC_TILES_PASSWORD: pc_tiles_ci
+
+jobs:
+  api:
+    name: API lint + tests
+    runs-on: ubuntu-24.04
+    services:
+      db:
+        image: imresamu/postgis:16-3.5
+        env:
+          POSTGRES_DB: precisecapture
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d precisecapture"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: ci-only
+      DATABASE_URL: postgis://pc_app:pc_app_ci@localhost:5432/precisecapture
+      MIGRATION_DATABASE_URL: postgis://pc_owner:pc_owner_ci@localhost:5432/precisecapture
+      PLATFORM_DATABASE_URL: postgis://pc_platform:pc_platform_ci@localhost:5432/precisecapture
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GDAL, GEOS and PROJ
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends gdal-bin libgdal-dev libgeos-dev libproj-dev postgresql-client
+
+      - name: Create database roles (same script as docker-compose)
+        # Service containers cannot mount init scripts, so run the script against the service.
+        env:
+          PGPASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: precisecapture
+          PGHOST: localhost
+        run: bash infra/docker/postgres-init/01-roles.sh
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+
+      - name: Install API dependencies
+        run: make api-install
+
+      - name: Lint
+        run: make api-lint
+
+      - name: Migrations are up to date
+        working-directory: apps/api
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Tests (incl. integration against Redis)
+        working-directory: apps/api
+        run: uv run pytest -ra
+
+  web:
+    name: Web lint + tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint and test every workspace package that defines the scripts
+        run: pnpm -r --if-present lint && pnpm -r --if-present test
