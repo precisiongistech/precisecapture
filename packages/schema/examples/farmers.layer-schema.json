@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "layerId": "lyr_farmers",
+  "version": 1,
+  "title": { "en": "Farmers" },
+  "fields": [
+    { "key": "full_name", "type": "text", "label": { "en": "Farmer's full name" }, "required": true, "personalData": true,
+      "validation": { "minLength": 2, "maxLength": 120 } },
+    { "key": "gender", "type": "select_one", "label": { "en": "Gender" }, "options": "list:gender", "personalData": true },
+    { "key": "year_of_birth", "type": "integer", "label": { "en": "Year of birth" }, "personalData": true,
+      "validation": { "min": 1920, "max": 2010 } },
+    { "key": "id_type", "type": "select_one", "label": { "en": "ID type" }, "options": "list:id_type" },
+    { "key": "id_number", "type": "text", "label": { "en": "ID number" }, "personalData": true,
+      "relevant": "${id_type} != '' and ${id_type} != 'none'", "required": "${id_type} != '' and ${id_type} != 'none'", "unique": true },
+    { "key": "phone", "type": "phone", "label": { "en": "Phone number" }, "personalData": true },
+    { "key": "photo", "type": "photo", "label": { "en": "Farmer photo" }, "min": 0, "max": 1, "maxDimensionPx": 1280, "personalData": true },
+    { "key": "region", "type": "select_one", "label": { "en": "Region" }, "options": "list:region", "required": true, "sticky": true },
+    { "key": "district", "type": "select_one", "label": { "en": "District" }, "options": "list:district",
+      "choiceFilterParent": "region", "required": true, "sticky": true },
+    { "key": "community", "type": "text", "label": { "en": "Community" }, "required": true, "sticky": true },
+    { "key": "cooperative", "type": "text", "label": { "en": "Cooperative / society" }, "sticky": true },
+    { "key": "consent", "type": "yes_no", "label": { "en": "Farmer consents to data collection and sharing with the buyer" },
+      "required": true, "constraint": ". = 'yes'", "constraintMessage": { "en": "Consent is required to register the farmer." } }
+  ],
+  "lists": {
+    "gender": [
+      { "value": "female", "label": { "en": "Female" } },
+      { "value": "male", "label": { "en": "Male" } },
+      { "value": "prefer_not", "label": { "en": "Prefer not to say" } }
+    ],
+    "id_type": [
+      { "value": "ghana_card", "label": { "en": "Ghana Card" } },
+      { "value": "voter_id", "label": { "en": "Voter ID" } },
+      { "value": "cocoa_farmer_id", "label": { "en": "Cocoa farmer ID" } },
+      { "value": "none", "label": { "en": "None" } }
+    ],
+    "region": [
+      { "value": "western_north", "label": { "en": "Western North" } },
+      { "value": "western", "label": { "en": "Western" } },
+      { "value": "ashanti", "label": { "en": "Ashanti" } }
+    ],
+    "district": [
+      { "value": "sefwi_wiawso", "label": { "en": "Sefwi Wiawso" }, "filter": { "region": "western_north" } },
+      { "value": "juaboso", "label": { "en": "Juaboso" }, "filter": { "region": "western_north" } },
+      { "value": "bibiani", "label": { "en": "Bibiani-Anhwiaso-Bekwai" }, "filter": { "region": "western_north" } }
+    ]
+  }
+}

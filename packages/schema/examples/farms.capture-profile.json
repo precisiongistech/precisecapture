@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "geometryType": "polygon",
+  "modes": { "allowed": ["stream", "gps_vertex", "tap"], "default": "stream", "locked": false },
+  "autoClose": { "enabled": true, "locked": true },
+  "minVertices": 3,
+  "snapping": { "enabled": true, "toleranceMeters": 2, "targets": ["vertex", "edge"], "layers": ["self"], "locked": false },
+  "stream": {
+    "intervalMeters": 3,
+    "allowedIntervalsMeters": [1, 2, 3, 5, 10],
+    "intervalSeconds": null,
+    "pauseWhenStationary": true,
+    "skipVertexIfAccuracyWorseThanMeters": 5,
+    "simplifyOnClose": { "enabled": true, "toleranceMeters": "auto" },
+    "keepRawTrack": true,
+    "locked": false
+  },
+  "gps": {
+    "maxAccuracyMeters": 5,
+    "onPoorAccuracy": "warn",
+    "averaging": { "enabled": true, "samples": 10, "locked": false },
+    "allowExternalReceiver": true,
+    "rejectMockLocation": true
+  },
+  "offsetPoints": { "enabled": false },
+  "validation": {
+    "preventSelfIntersection": true,
+    "topology": { "noOverlapWith": ["self"], "onOverlap": "flag", "overlapToleranceSqm": 1 },
+    "minAreaSqm": 100,
+    "maxAreaSqm": 2000000,
+    "duplicateWarningMeters": 10
+  },
+  "centroid": { "method": "centroid", "fallback": "point_on_surface", "allowPointOnlyCapture": false },
+  "display": { "showArea": true, "showLength": true, "units": "hectares" }
+}

@@ -1,0 +1,253 @@
+{
+  "description": "Shared test vectors for the PreciseCapture expression language. Both the TypeScript and Python evaluators must pass all cases. Extend to 40+ cases in milestone M1.",
+  "defaults": {
+    "now": "2026-10-22T10:00:00Z",
+    "today": "2026-10-22"
+  },
+  "cases": [
+    {
+      "name": "number literal",
+      "expr": "3",
+      "context": {
+        "values": {}
+      },
+      "expect": 3
+    },
+    {
+      "name": "precedence",
+      "expr": "2 + 3 * 4",
+      "context": {
+        "values": {}
+      },
+      "expect": 14
+    },
+    {
+      "name": "grouping",
+      "expr": "(2 + 3) * 4",
+      "context": {
+        "values": {}
+      },
+      "expect": 20
+    },
+    {
+      "name": "div",
+      "expr": "10 div 4",
+      "context": {
+        "values": {}
+      },
+      "expect": 2.5
+    },
+    {
+      "name": "div by zero is null",
+      "expr": "1 div 0",
+      "context": {
+        "values": {}
+      },
+      "expect": null
+    },
+    {
+      "name": "field equality true",
+      "expr": "${crop} = 'other'",
+      "context": {
+        "values": {
+          "crop": "other"
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "field equality null is false",
+      "expr": "${crop} = 'other'",
+      "context": {
+        "values": {}
+      },
+      "expect": false
+    },
+    {
+      "name": "not equal with null is true",
+      "expr": "${id_type} != 'none'",
+      "context": {
+        "values": {}
+      },
+      "expect": true
+    },
+    {
+      "name": "answered and not none (null)",
+      "expr": "${id_type} != '' and ${id_type} != 'none'",
+      "context": {
+        "values": {}
+      },
+      "expect": false
+    },
+    {
+      "name": "yes_no stored as string",
+      "expr": "${consent} = 'yes'",
+      "context": {
+        "values": {
+          "consent": "yes"
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "not equal",
+      "expr": "${id_type} != 'none'",
+      "context": {
+        "values": {
+          "id_type": "ghana_card"
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "and/or precedence",
+      "expr": "true() or false() and false()",
+      "context": {
+        "values": {}
+      },
+      "expect": true
+    },
+    {
+      "name": "self reference in constraint",
+      "expr": ". = 'yes'",
+      "context": {
+        "values": {},
+        "self": "yes"
+      },
+      "expect": true
+    },
+    {
+      "name": "numeric string coercion",
+      "expr": "${planting_year} >= 2000",
+      "context": {
+        "values": {
+          "planting_year": "2012"
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "if()",
+      "expr": "if(${area} > 40000, 'yes', 'no')",
+      "context": {
+        "values": {
+          "area": 52000
+        }
+      },
+      "expect": "yes"
+    },
+    {
+      "name": "geom_area from context",
+      "expr": "geom_area() div 10000",
+      "context": {
+        "values": {},
+        "geomAreaM2": 25000
+      },
+      "expect": 2.5
+    },
+    {
+      "name": "geom_area null without polygon",
+      "expr": "geom_area() div 10000",
+      "context": {
+        "values": {},
+        "geomAreaM2": null
+      },
+      "expect": null
+    },
+    {
+      "name": "selected on select_many",
+      "expr": "selected(${crops}, 'cocoa')",
+      "context": {
+        "values": {
+          "crops": [
+            "cocoa",
+            "cashew"
+          ]
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "count-selected",
+      "expr": "count-selected(${crops})",
+      "context": {
+        "values": {
+          "crops": [
+            "cocoa",
+            "cashew"
+          ]
+        }
+      },
+      "expect": 2
+    },
+    {
+      "name": "concat with null",
+      "expr": "concat(${a}, '-', ${b})",
+      "context": {
+        "values": {
+          "a": "GH"
+        }
+      },
+      "expect": "GH-"
+    },
+    {
+      "name": "round",
+      "expr": "round(2.3456, 2)",
+      "context": {
+        "values": {}
+      },
+      "expect": 2.35
+    },
+    {
+      "name": "today injected",
+      "expr": "today()",
+      "context": {
+        "values": {}
+      },
+      "expect": "2026-10-22"
+    },
+    {
+      "name": "unknown function",
+      "expr": "foo(1)",
+      "context": {
+        "values": {}
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "unbalanced parens",
+      "expr": "(1 + 2",
+      "context": {
+        "values": {}
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "unterminated string",
+      "expr": "'abc",
+      "context": {
+        "values": {}
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "unknown field with fields list",
+      "expr": "${nope} = 1",
+      "context": {
+        "values": {},
+        "fields": [
+          "crop"
+        ]
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "nearest reserved in v1",
+      "expr": "nearest('roads', 'name')",
+      "context": {
+        "values": {}
+      },
+      "expectError": "parse"
+    }
+  ]
+}

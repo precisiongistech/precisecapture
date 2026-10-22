@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "layerId": "lyr_farms",
+  "version": 1,
+  "title": { "en": "Farms" },
+  "fields": [
+    { "key": "farmer", "type": "relation", "label": { "en": "Farmer" }, "required": true,
+      "relation": { "layer": "lyr_farmers", "displayField": "full_name", "allowCreateInline": true } },
+    { "key": "farm_code", "type": "text", "label": { "en": "Farm code" }, "unique": true,
+      "hint": { "en": "Leave blank to auto-generate" } },
+    { "key": "crop", "type": "select_one", "label": { "en": "Main crop" }, "options": "list:crop", "required": true, "sticky": true },
+    { "key": "other_crop", "type": "text", "label": { "en": "Other crop" },
+      "relevant": "${crop} = 'other'", "required": "${crop} = 'other'" },
+    { "key": "planting_year", "type": "integer", "label": { "en": "Year planted" },
+      "validation": { "min": 1950, "max": 2027 } },
+    { "key": "ownership", "type": "select_one", "label": { "en": "Ownership" }, "options": "list:ownership" },
+    { "key": "area_ha", "type": "calculate", "label": { "en": "Area (ha)" }, "expression": "geom_area() div 10000", "readonly": true },
+    { "key": "needs_polygon_for_eudr", "type": "calculate", "expression": "if(geom_area() > 40000, 'yes', 'no')", "readonly": true },
+    { "key": "photos", "type": "photo", "label": { "en": "Farm photos" }, "min": 1, "max": 4, "maxDimensionPx": 1920, "stamp": true, "required": true },
+    { "key": "notes", "type": "text", "label": { "en": "Notes" } }
+  ],
+  "lists": {
+    "crop": [
+      { "value": "cocoa", "label": { "en": "Cocoa" } },
+      { "value": "coffee", "label": { "en": "Coffee" } },
+      { "value": "oil_palm", "label": { "en": "Oil palm" } },
+      { "value": "rubber", "label": { "en": "Rubber" } },
+      { "value": "cashew", "label": { "en": "Cashew" } },
+      { "value": "other", "label": { "en": "Other" } }
+    ],
+    "ownership": [
+      { "value": "owner", "label": { "en": "Owner" } },
+      { "value": "caretaker", "label": { "en": "Caretaker" } },
+      { "value": "sharecropper", "label": { "en": "Sharecropper (abunu/abusa)" } },
+      { "value": "rented", "label": { "en": "Rented" } }
+    ]
+  }
+}

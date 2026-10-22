@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.precisecapture.app/capture-profile/v1.json",
+  "title": "PreciseCapture capture profile",
+  "description": "Per-layer rules for how geometry is captured. Partial profiles are allowed at org and project level; the effective profile is resolved org -> project -> layer -> collector override (ignored where locked). Servers validate strictly; apps must ignore unknown keys so older versions keep working.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "geometryType": { "enum": ["point", "line", "polygon", "none"] },
+    "modes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {
+          "type": "array",
+          "items": { "enum": ["tap", "gps_vertex", "stream", "hybrid"] },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "default": { "enum": ["tap", "gps_vertex", "stream", "hybrid"] },
+        "locked": { "$ref": "#/$defs/locked" }
+      }
+    },
+    "autoClose": { "$ref": "#/$defs/toggle" },
+    "minVertices": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "snapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "toleranceMeters": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
+        "targets": {
+          "type": "array",
+          "items": { "enum": ["vertex", "edge"] },
+          "uniqueItems": true
+        },
+        "layers": { "$ref": "#/$defs/layerRefs" },
+        "locked": { "$ref": "#/$defs/locked" }
+      }
+    },
+    "trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "layers": { "$ref": "#/$defs/layerRefs" },
+        "locked": { "$ref": "#/$defs/locked" }
+      }
+    },
+    "stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Streaming capture for lines and polygons. Distance OR time drives it, not both.",
+      "properties": {
+        "intervalMeters": { "type": ["number", "null"], "minimum": 1, "maximum": 100 },
+        "allowedIntervalsMeters": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 1, "maximum": 100 },
+          "uniqueItems": true
+        },
+        "intervalSeconds": { "type": ["number", "null"], "minimum": 1, "maximum": 600 },
+        "pauseWhenStationary": { "type": "boolean" },
+        "skipVertexIfAccuracyWorseThanMeters": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "simplifyOnClose": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "toleranceMeters": {
+              "oneOf": [
+                { "const": "auto" },
+                { "type": "number", "exclusiveMinimum": 0, "maximum": 50 }
+              ]
+            }
+          }
+        },
+        "keepRawTrack": { "type": "boolean" },
+        "locked": { "$ref": "#/$defs/locked" }
+      }
+    },
+    "gps": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxAccuracyMeters": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "onPoorAccuracy": { "enum": ["warn", "block", "ignore"] },
+        "averaging": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "samples": { "type": "integer", "minimum": 2, "maximum": 300 },
+            "locked": { "$ref": "#/$defs/locked" }
+          }
+        },
+        "allowExternalReceiver": { "type": "boolean" },
+        "rejectMockLocation": { "type": "boolean" },
+        "locked": { "$ref": "#/$defs/locked" }
+      }
+    },
+    "offsetPoints": { "$ref": "#/$defs/toggle" },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preventSelfIntersection": { "type": "boolean" },
+        "topology": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "noOverlapWith": { "$ref": "#/$defs/layerRefs" },
+            "noGapsWith": { "$ref": "#/$defs/layerRefs" },
+            "onOverlap": { "enum": ["flag", "block"], "default": "flag" },
+            "overlapToleranceSqm": { "type": "number", "minimum": 0, "default": 1 }
+          }
+        },
+        "minAreaSqm": { "type": ["number", "null"], "minimum": 0 },
+        "maxAreaSqm": { "type": ["number", "null"], "minimum": 0 },
+        "duplicateWarningMeters": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "centroid": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "method": { "enum": ["centroid", "point_on_surface"] },
+        "fallback": { "enum": ["point_on_surface", "none"] },
+        "allowPointOnlyCapture": { "type": "boolean" }
+      }
+    },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "showArea": { "type": "boolean" },
+        "showLength": { "type": "boolean" },
+        "units": { "enum": ["metric", "hectares", "acres", "imperial"] }
+      }
+    }
+  },
+  "$defs": {
+    "locked": {
+      "type": "boolean",
+      "description": "When true, collectors cannot change this setting on the device."
+    },
+    "toggle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "locked": { "$ref": "#/$defs/locked" }
+      }
+    },
+    "layerRefs": {
+      "type": "array",
+      "description": "Layer ids in the same project, or the literal 'self'.",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.precisecapture.app/sync/v1.json",
+  "title": "PreciseCapture sync wire formats",
+  "description": "Push request/response and pull response for POST /api/v1/sync/push and GET /api/v1/sync/pull?project=&cursor=&limit=. See docs/ENGINEERING_NOTES.md §2.",
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "geojsonGeometry": {
+      "type": ["object", "null"],
+      "required": ["type", "coordinates"],
+      "properties": {
+        "type": { "enum": ["Point", "LineString", "Polygon", "MultiPolygon"] },
+        "coordinates": { "type": "array" }
+      }
+    },
+    "changeMeta": {
+      "type": "object",
+      "required": ["device_id", "captured_at"],
+      "properties": {
+        "device_id": { "$ref": "#/$defs/uuid" },
+        "captured_at": { "type": "string", "format": "date-time" },
+        "app_version": { "type": "string" },
+        "gps_accuracy_m": { "type": ["number", "null"], "minimum": 0 },
+        "mock_location": { "type": "boolean" },
+        "capture_mode": { "enum": ["tap", "gps_vertex", "stream", "hybrid", "external_gnss"] },
+        "stream_interval_m": { "type": ["number", "null"] },
+        "vertex_meta": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "i": { "type": "integer", "minimum": 0 },
+              "accuracy_m": { "type": "number" },
+              "fix_type": { "type": "string" },
+              "satellites": { "type": "integer" },
+              "t": { "type": "string", "format": "date-time" },
+              "source": { "enum": ["phone", "external_gnss", "manual"] }
+            }
+          }
+        },
+        "raw_track": {
+          "description": "Unsimplified streamed points [lon, lat, accuracy_m, epoch_ms]. Optional; sent once on create.",
+          "type": "array",
+          "items": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "number" } }
+        }
+      }
+    },
+    "change": {
+      "type": "object",
+      "required": ["change_id", "op", "entity", "id", "layer_id", "base_version", "schema_version", "meta"],
+      "properties": {
+        "change_id": { "$ref": "#/$defs/uuid" },
+        "op": { "enum": ["create", "update", "delete"] },
+        "entity": { "const": "feature" },
+        "id": { "$ref": "#/$defs/uuid" },
+        "layer_id": { "$ref": "#/$defs/uuid" },
+        "base_version": { "type": ["integer", "null"], "minimum": 0 },
+        "schema_version": { "type": "integer", "minimum": 1 },
+        "geom": { "$ref": "#/$defs/geojsonGeometry" },
+        "attributes": { "type": "object" },
+        "changed_fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Attribute keys changed by this edit, plus 'geom' if the geometry changed. Required for update."
+        },
+        "status": { "enum": ["draft", "submitted"] },
+        "meta": { "$ref": "#/$defs/changeMeta" }
+      },
+      "allOf": [
+        { "if": { "properties": { "op": { "const": "create" } } }, "then": { "properties": { "base_version": { "const": null } } } },
+        { "if": { "properties": { "op": { "const": "update" } } }, "then": { "required": ["changed_fields"] } }
+      ]
+    },
+    "changeResult": {
+      "type": "object",
+      "required": ["change_id", "status"],
+      "properties": {
+        "change_id": { "$ref": "#/$defs/uuid" },
+        "status": { "enum": ["accepted", "merged", "conflict", "rejected", "duplicate"] },
+        "feature": {
+          "type": "object",
+          "properties": { "id": { "$ref": "#/$defs/uuid" }, "version": { "type": "integer" } }
+        },
+        "conflict_id": { "$ref": "#/$defs/uuid" },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "field": { "type": "string" },
+              "code": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "pullItem": {
+      "type": "object",
+      "required": ["seq", "entity", "id", "layer_id", "version", "deleted"],
+      "properties": {
+        "seq": { "type": "integer" },
+        "entity": { "const": "feature" },
+        "id": { "$ref": "#/$defs/uuid" },
+        "layer_id": { "$ref": "#/$defs/uuid" },
+        "version": { "type": "integer" },
+        "deleted": { "type": "boolean" },
+        "schema_version": { "type": "integer" },
+        "geom": { "$ref": "#/$defs/geojsonGeometry" },
+        "attributes": { "type": "object" },
+        "status": { "enum": ["draft", "submitted", "approved", "rejected", "sent_back"] },
+        "review_note": { "type": ["string", "null"] },
+        "computed": {
+          "type": "object",
+          "properties": {
+            "area_m2": { "type": ["number", "null"] },
+            "length_m": { "type": ["number", "null"] },
+            "centroid": { "$ref": "#/$defs/geojsonGeometry" },
+            "centroid_method": { "enum": ["centroid", "point_on_surface", null] }
+          }
+        },
+        "qa_flags": { "type": "array", "items": { "type": "string" } },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "updated_by": { "$ref": "#/$defs/uuid" }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "title": "PushRequest",
+      "type": "object",
+      "required": ["project_id", "changes"],
+      "properties": {
+        "project_id": { "$ref": "#/$defs/uuid" },
+        "changes": { "type": "array", "maxItems": 200, "items": { "$ref": "#/$defs/change" } }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "PushResponse",
+      "type": "object",
+      "required": ["results", "last_seq"],
+      "properties": {
+        "results": { "type": "array", "items": { "$ref": "#/$defs/changeResult" } },
+        "last_seq": { "type": "integer" },
+        "config_version": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "PullResponse",
+      "type": "object",
+      "required": ["items", "next_cursor", "has_more", "config_version"],
+      "properties": {
+        "items": { "type": "array", "items": { "$ref": "#/$defs/pullItem" } },
+        "next_cursor": { "type": "integer" },
+        "has_more": { "type": "boolean" },
+        "config_version": { "type": "integer" }
+      },
+      "additionalProperties": false
+    }
+  ]
+}
