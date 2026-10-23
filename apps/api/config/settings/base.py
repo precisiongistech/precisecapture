@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     "precisecapture.accounts",
     "precisecapture.orgs",
     "precisecapture.projects",
+    "precisecapture.sync",
+    "precisecapture.attachments",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
