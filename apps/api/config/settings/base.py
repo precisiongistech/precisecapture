@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "precisecapture.accounts",
     "precisecapture.orgs",
     "precisecapture.projects",
+    "precisecapture.features",
     "precisecapture.sync",
     "precisecapture.attachments",
 ]
@@ -73,6 +74,7 @@ MIDDLEWARE = [
     # Clears the tenant contextvar after each request. The tenant itself is set by the Ninja
     # auth class inside the request transaction (ENGINEERING_NOTES.md §1), not here.
     "precisecapture.common.middleware.TenantContextResetMiddleware",
+    "precisecapture.common.middleware.IdempotencyMiddleware",
 ]
 if PLATFORM_ADMIN_ENABLED:
     MIDDLEWARE += [

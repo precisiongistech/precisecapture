@@ -4,6 +4,13 @@ import factory
 from factory.django import DjangoModelFactory
 
 from precisecapture.accounts.models import Device, User
+from precisecapture.features.models import (
+    Feature,
+    FeatureHistory,
+    FeatureRelation,
+    RawTrack,
+    VertexMeta,
+)
 from precisecapture.orgs.models import Membership, Organisation, Role
 from precisecapture.projects.models import (
     GeometryType,
@@ -110,3 +117,62 @@ class LayerTemplateFactory(DjangoModelFactory[LayerTemplate]):
     name = factory.Sequence(lambda n: f"Template {n}")
     geometry_type = GeometryType.POINT
     attributes = {"schemaVersion": 1, "fields": [{"key": "name", "type": "text"}]}
+
+
+SQUARE_WKT = "SRID=4326;POLYGON((-2.5 6.2, -2.499 6.2, -2.499 6.201, -2.5 6.201, -2.5 6.2))"
+
+
+class FeatureFactory(DjangoModelFactory[Feature]):
+    class Meta:
+        model = Feature
+
+    layer = factory.SubFactory(LayerFactory)
+    project = factory.LazyAttribute(lambda o: o.layer.project)
+    org = factory.LazyAttribute(lambda o: o.layer.org)
+    geometry_type = factory.LazyAttribute(lambda o: o.layer.geometry_type)
+    geom = factory.LazyAttribute(
+        lambda o: SQUARE_WKT if o.layer.geometry_type == "polygon" else None
+    )
+    attributes = factory.LazyFunction(dict)
+    schema_version = 1
+
+
+class FeatureHistoryFactory(DjangoModelFactory[FeatureHistory]):
+    class Meta:
+        model = FeatureHistory
+
+    feature = factory.SubFactory(FeatureFactory)
+    org = factory.LazyAttribute(lambda o: o.feature.org)
+    version = 1
+    change_type = "create"
+    status = "submitted"
+
+
+class FeatureRelationFactory(DjangoModelFactory[FeatureRelation]):
+    class Meta:
+        model = FeatureRelation
+
+    from_feature = factory.SubFactory(FeatureFactory)
+    to_feature = factory.SubFactory(FeatureFactory)
+    org = factory.LazyAttribute(lambda o: o.from_feature.org)
+    attribute_key = "farmer"
+
+
+class RawTrackFactory(DjangoModelFactory[RawTrack]):
+    class Meta:
+        model = RawTrack
+
+    feature = factory.SubFactory(FeatureFactory)
+    org = factory.LazyAttribute(lambda o: o.feature.org)
+    points = [[-2.5, 6.2, 3.1, 1760000000000]]
+    point_count = 1
+
+
+class VertexMetaFactory(DjangoModelFactory[VertexMeta]):
+    class Meta:
+        model = VertexMeta
+
+    feature = factory.SubFactory(FeatureFactory)
+    org = factory.LazyAttribute(lambda o: o.feature.org)
+    vertex_index = 0
+    accuracy_m = 3.1

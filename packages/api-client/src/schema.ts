@@ -228,6 +228,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/features/{feature_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Feature
+         * @description Feature with raw track, vertex metadata and relations (audit view).
+         */
+        get: operations["getFeature"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Feature
+         * @description Soft delete (so it syncs). Restore with POST /features/{id}/restore.
+         */
+        delete: operations["deleteFeature"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Feature
+         * @description Web edit. Send `base_version` (or `If-Match: "<version>"`); a stale version gives 409.
+         *     Omitted keys keep their values; `attributes` replaces the whole attribute set.
+         */
+        patch: operations["updateFeature"];
+        trace?: never;
+    };
+    "/api/v1/features/{feature_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get History */
+        get: operations["getFeatureHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/features/{feature_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Feature */
+        post: operations["restoreFeature"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/features/{feature_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Review Feature
+         * @description Approve, reject, or send back with a note (the collector sees it on the next pull).
+         */
+        post: operations["reviewFeature"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -359,6 +442,32 @@ export interface paths {
          */
         put: operations["saveCaptureProfile"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/layers/{layer_id}/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Features
+         * @description GeoJSON FeatureCollection of the layer's features. Filters: bbox, status, updated_since,
+         *     include_deleted, qa_flag, attr.<key>=value. Cursor pagination: `next_cursor` and `has_more`
+         *     are top-level members; UUIDv7 ids give creation order.
+         */
+        get: operations["listFeatures"];
+        put?: never;
+        /**
+         * Create Feature
+         * @description Create a feature from the web (collectors and managers); same write path as sync.
+         */
+        post: operations["createFeature"];
         delete?: never;
         options?: never;
         head?: never;
@@ -780,6 +889,26 @@ export interface paths {
         head?: never;
         /** Update Member */
         patch: operations["updateProjectMember"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/tiles/{layer_id}/{z}/{x}/{y}.mvt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Tile
+         * @description Mapbox vector tile for one layer, proxied from internal Martin after membership checks.
+         */
+        get: operations["getLayerTile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/sync/pull": {
@@ -1380,6 +1509,36 @@ export interface components {
             length_m?: number | null;
         };
         /**
+         * ComputedOut
+         * @example {
+         *       "area_m2": 1.5,
+         *       "area_ha": 1.5,
+         *       "area_acres": 1.5,
+         *       "perimeter_m": 1.5,
+         *       "length_m": 1.5,
+         *       "centroid": {},
+         *       "centroid_method": "string"
+         *     }
+         */
+        ComputedOut: {
+            /** Area Acres */
+            area_acres: number | null;
+            /** Area Ha */
+            area_ha: number | null;
+            /** Area M2 */
+            area_m2: number | null;
+            /** Centroid */
+            centroid: {
+                [key: string]: unknown;
+            } | null;
+            /** Centroid Method */
+            centroid_method: string | null;
+            /** Length M */
+            length_m: number | null;
+            /** Perimeter M */
+            perimeter_m: number | null;
+        };
+        /**
          * DeviceIn
          * @example {
          *       "id": "0192f0c1-1234-7abc-8def-000000000001",
@@ -1454,6 +1613,338 @@ export interface components {
             revoked_at: string | null;
         };
         /**
+         * FeatureCreateIn
+         * @example {
+         *       "id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "geom": {},
+         *       "attributes": {},
+         *       "status": "string",
+         *       "schema_version": 1,
+         *       "captured_at": "2026-10-22T10:15:02Z"
+         *     }
+         */
+        FeatureCreateIn: {
+            /** Attributes */
+            attributes?: {
+                [key: string]: unknown;
+            };
+            /** Captured At */
+            captured_at?: string | null;
+            /**
+             * Geom
+             * @description GeoJSON geometry in EPSG:4326 (null for table layers)
+             */
+            geom?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Id
+             * @description Client-generated UUIDv7; the server keeps it
+             */
+            id?: string | null;
+            /**
+             * Schema Version
+             * @description Defaults to the layer's current version
+             */
+            schema_version?: number | null;
+            /** Status */
+            status?: string | null;
+        };
+        /**
+         * FeatureDetailOut
+         * @example {
+         *       "id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "project_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "layer_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "layer_key": "string",
+         *       "geometry_type": "string",
+         *       "geom": {},
+         *       "attributes": {},
+         *       "schema_version": 1,
+         *       "version": 1,
+         *       "status": "string",
+         *       "review_note": "string",
+         *       "reviewed_at": "2026-10-22T10:15:02Z",
+         *       "deleted": true,
+         *       "computed": {
+         *         "area_m2": 1.5,
+         *         "area_ha": 1.5,
+         *         "area_acres": 1.5,
+         *         "perimeter_m": 1.5,
+         *         "length_m": 1.5,
+         *         "centroid": {},
+         *         "centroid_method": "string"
+         *       },
+         *       "qa_flags": [
+         *         "string"
+         *       ],
+         *       "created_by": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "updated_by": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "created_device": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "updated_device": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "captured_at": "2026-10-22T10:15:02Z",
+         *       "created_at": "2026-10-22T10:15:02Z",
+         *       "updated_at": "2026-10-22T10:15:02Z",
+         *       "raw_track": [
+         *         [
+         *           1.5
+         *         ]
+         *       ],
+         *       "vertex_meta": [],
+         *       "relations": {}
+         *     }
+         */
+        FeatureDetailOut: {
+            /** Attributes */
+            attributes: {
+                [key: string]: unknown;
+            };
+            /** Captured At */
+            captured_at: string | null;
+            computed: components["schemas"]["ComputedOut"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Created Device */
+            created_device: string | null;
+            /** Deleted */
+            deleted: boolean;
+            /** Geom */
+            geom: {
+                [key: string]: unknown;
+            } | null;
+            /** Geometry Type */
+            geometry_type: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Layer Id
+             * Format: uuid
+             */
+            layer_id: string;
+            /** Layer Key */
+            layer_key: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Qa Flags */
+            qa_flags: string[];
+            /** Raw Track */
+            raw_track?: number[][] | null;
+            /**
+             * Relations
+             * @description attribute key -> related feature id
+             */
+            relations?: {
+                [key: string]: string;
+            };
+            /** Review Note */
+            review_note: string;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Schema Version */
+            schema_version: number;
+            /** Status */
+            status: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By */
+            updated_by: string | null;
+            /** Updated Device */
+            updated_device: string | null;
+            /** Version */
+            version: number;
+            /**
+             * Vertex Meta
+             * @default []
+             */
+            vertex_meta: {
+                [key: string]: unknown;
+            }[];
+        };
+        /**
+         * FeatureListParams
+         * @example {
+         *       "bbox": "string",
+         *       "status": "string",
+         *       "updated_since": "2026-10-22T10:15:02Z",
+         *       "include_deleted": false,
+         *       "qa_flag": "string",
+         *       "cursor": "string",
+         *       "limit": 100
+         *     }
+         */
+        FeatureListParams: {
+            /**
+             * Bbox
+             * @description minLon,minLat,maxLon,maxLat (EPSG:4326)
+             */
+            bbox?: string | null;
+            /** Cursor */
+            cursor?: string | null;
+            /**
+             * Include Deleted
+             * @default false
+             */
+            include_deleted: boolean;
+            /**
+             * Limit
+             * @default 100
+             */
+            limit: number;
+            /**
+             * Qa Flag
+             * @description Only features carrying this QA flag
+             */
+            qa_flag?: string | null;
+            /**
+             * Status
+             * @description Comma-separated statuses
+             */
+            status?: string | null;
+            /** Updated Since */
+            updated_since?: string | null;
+        };
+        /**
+         * FeatureOut
+         * @example {
+         *       "id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "project_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "layer_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "layer_key": "string",
+         *       "geometry_type": "string",
+         *       "geom": {},
+         *       "attributes": {},
+         *       "schema_version": 1,
+         *       "version": 1,
+         *       "status": "string",
+         *       "review_note": "string",
+         *       "reviewed_at": "2026-10-22T10:15:02Z",
+         *       "deleted": true,
+         *       "computed": {
+         *         "area_m2": 1.5,
+         *         "area_ha": 1.5,
+         *         "area_acres": 1.5,
+         *         "perimeter_m": 1.5,
+         *         "length_m": 1.5,
+         *         "centroid": {},
+         *         "centroid_method": "string"
+         *       },
+         *       "qa_flags": [
+         *         "string"
+         *       ],
+         *       "created_by": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "updated_by": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "created_device": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "updated_device": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "captured_at": "2026-10-22T10:15:02Z",
+         *       "created_at": "2026-10-22T10:15:02Z",
+         *       "updated_at": "2026-10-22T10:15:02Z"
+         *     }
+         */
+        FeatureOut: {
+            /** Attributes */
+            attributes: {
+                [key: string]: unknown;
+            };
+            /** Captured At */
+            captured_at: string | null;
+            computed: components["schemas"]["ComputedOut"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Created Device */
+            created_device: string | null;
+            /** Deleted */
+            deleted: boolean;
+            /** Geom */
+            geom: {
+                [key: string]: unknown;
+            } | null;
+            /** Geometry Type */
+            geometry_type: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Layer Id
+             * Format: uuid
+             */
+            layer_id: string;
+            /** Layer Key */
+            layer_key: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Qa Flags */
+            qa_flags: string[];
+            /** Review Note */
+            review_note: string;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Schema Version */
+            schema_version: number;
+            /** Status */
+            status: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By */
+            updated_by: string | null;
+            /** Updated Device */
+            updated_device: string | null;
+            /** Version */
+            version: number;
+        };
+        /**
+         * FeaturePatchIn
+         * @example {
+         *       "geom": {},
+         *       "attributes": {},
+         *       "status": "string",
+         *       "base_version": 1
+         *     }
+         */
+        FeaturePatchIn: {
+            /** Attributes */
+            attributes?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Base Version
+             * @description Version you edited; 409 when stale (or use If-Match)
+             */
+            base_version?: number | null;
+            /** Geom */
+            geom?: {
+                [key: string]: unknown;
+            } | null;
+            /** Status */
+            status?: string | null;
+        };
+        /**
          * FeatureRef
          * @example {
          *       "id": "0192f0c1-1234-7abc-8def-000000000001",
@@ -1502,6 +1993,58 @@ export interface components {
             status: string;
             /** Version */
             version: string;
+        };
+        /**
+         * HistoryOut
+         * @example {
+         *       "version": 1,
+         *       "change_type": "string",
+         *       "changed_fields": [
+         *         "string"
+         *       ],
+         *       "status": "string",
+         *       "review_note": "string",
+         *       "deleted": true,
+         *       "geom": {},
+         *       "attributes": {},
+         *       "changed_by": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "device": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "change_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "changed_at": "2026-10-22T10:15:02Z"
+         *     }
+         */
+        HistoryOut: {
+            /** Attributes */
+            attributes: {
+                [key: string]: unknown;
+            };
+            /** Change Id */
+            change_id: string | null;
+            /** Change Type */
+            change_type: string;
+            /**
+             * Changed At
+             * Format: date-time
+             */
+            changed_at: string;
+            /** Changed By */
+            changed_by: string | null;
+            /** Changed Fields */
+            changed_fields: string[];
+            /** Deleted */
+            deleted: boolean;
+            /** Device */
+            device: string | null;
+            /** Geom */
+            geom: {
+                [key: string]: unknown;
+            } | null;
+            /** Review Note */
+            review_note: string;
+            /** Status */
+            status: string;
+            /** Version */
+            version: number;
         };
         /**
          * InvitationAcceptIn
@@ -2723,6 +3266,22 @@ export interface components {
             refresh_token: string;
         };
         /**
+         * ReviewIn
+         * @example {
+         *       "action": "string",
+         *       "note": ""
+         *     }
+         */
+        ReviewIn: {
+            /** Action */
+            action: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /**
          * SchemaDraftIn
          * @example {
          *       "attributes": {}
@@ -2991,11 +3550,18 @@ export type SchemaChangeError = components['schemas']['ChangeError'];
 export type SchemaChangeMeta = components['schemas']['ChangeMeta'];
 export type SchemaChangeResult = components['schemas']['ChangeResult'];
 export type SchemaComputed = components['schemas']['Computed'];
+export type SchemaComputedOut = components['schemas']['ComputedOut'];
 export type SchemaDeviceIn = components['schemas']['DeviceIn'];
 export type SchemaDeviceOut = components['schemas']['DeviceOut'];
+export type SchemaFeatureCreateIn = components['schemas']['FeatureCreateIn'];
+export type SchemaFeatureDetailOut = components['schemas']['FeatureDetailOut'];
+export type SchemaFeatureListParams = components['schemas']['FeatureListParams'];
+export type SchemaFeatureOut = components['schemas']['FeatureOut'];
+export type SchemaFeaturePatchIn = components['schemas']['FeaturePatchIn'];
 export type SchemaFeatureRef = components['schemas']['FeatureRef'];
 export type SchemaGeoJsonGeometry = components['schemas']['GeoJSONGeometry'];
 export type SchemaHealthOut = components['schemas']['HealthOut'];
+export type SchemaHistoryOut = components['schemas']['HistoryOut'];
 export type SchemaInvitationAcceptIn = components['schemas']['InvitationAcceptIn'];
 export type SchemaInvitationAcceptOut = components['schemas']['InvitationAcceptOut'];
 export type SchemaInvitationIn = components['schemas']['InvitationIn'];
@@ -3034,6 +3600,7 @@ export type SchemaPullResponse = components['schemas']['PullResponse'];
 export type SchemaPushRequest = components['schemas']['PushRequest'];
 export type SchemaPushResponse = components['schemas']['PushResponse'];
 export type SchemaRefreshIn = components['schemas']['RefreshIn'];
+export type SchemaReviewIn = components['schemas']['ReviewIn'];
 export type SchemaSchemaDraftIn = components['schemas']['SchemaDraftIn'];
 export type SchemaSchemaOut = components['schemas']['SchemaOut'];
 export type SchemaSchemaPublishOut = components['schemas']['SchemaPublishOut'];
@@ -3937,6 +4504,540 @@ export interface operations {
             };
         };
     };
+    getFeature: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                feature_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureDetailOut"];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    deleteFeature: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                feature_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    updateFeature: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                feature_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeaturePatchIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureOut"];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getFeatureHistory: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                feature_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryOut"][];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    restoreFeature: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                feature_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureOut"];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    reviewFeature: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                feature_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureOut"];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     health: {
         parameters: {
             query?: never;
@@ -4673,6 +5774,195 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CaptureProfileOut"];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listFeatures: {
+        parameters: {
+            query?: {
+                /** @description minLon,minLat,maxLon,maxLat (EPSG:4326) */
+                bbox?: string | null;
+                cursor?: string | null;
+                include_deleted?: boolean;
+                limit?: number;
+                /** @description Only features carrying this QA flag */
+                qa_flag?: string | null;
+                /** @description Comma-separated statuses */
+                status?: string | null;
+                updated_since?: string | null;
+            };
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                layer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    createFeature: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                layer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeatureCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureOut"];
                 };
             };
             /** @description Bad request (e.g. missing or malformed X-Org-Id) */
@@ -7412,6 +8702,96 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProjectMemberOut"];
                 };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getLayerTile: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                layer_id: string;
+                project_id: string;
+                x: number;
+                y: number;
+                z: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Bad request (e.g. missing or malformed X-Org-Id) */
             400: {
