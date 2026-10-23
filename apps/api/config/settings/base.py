@@ -36,6 +36,10 @@ AUTH_METHODS: list[str] = ["password"]
 
 PLATFORM_ADMIN_ENABLED = env.bool("PLATFORM_ADMIN_ENABLED", default=False)
 
+# The shared contract (packages/schema): JSON Schemas, examples and test vectors.
+# Read from the monorepo in development; the production image copies the folder.
+SCHEMA_DIR = env.str("SCHEMA_DIR", default=str(REPO_ROOT / "packages" / "schema"))
+
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
