@@ -52,6 +52,17 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = "accounts.User"
 
+if PLATFORM_ADMIN_ENABLED:
+    # Internal-only deployment: Django admin for platform staff, reading/writing through the
+    # `platform` alias (see common/admin.py). Never enabled on the public web process.
+    INSTALLED_APPS += [
+        "django.contrib.admin",
+        "django.contrib.sessions",
+        "django.contrib.messages",
+        "django.contrib.staticfiles",
+    ]
+    STATIC_URL = "static/"
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -60,6 +71,13 @@ MIDDLEWARE = [
     # auth class inside the request transaction (ENGINEERING_NOTES.md §1), not here.
     "precisecapture.common.middleware.TenantContextResetMiddleware",
 ]
+if PLATFORM_ADMIN_ENABLED:
+    MIDDLEWARE += [
+        "django.contrib.sessions.middleware.SessionMiddleware",
+        "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "django.contrib.messages.middleware.MessageMiddleware",
+    ]
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
@@ -70,7 +88,13 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],
         "APP_DIRS": True,
-        "OPTIONS": {"context_processors": []},
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ]
+        },
     }
 ]
 

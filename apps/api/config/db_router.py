@@ -6,7 +6,8 @@ run only on `settings.MIGRATION_DATABASE_ALIAS` (`migrations` = pc_owner in dev
 and prod; `default` under pytest, where `default` already is pc_owner).
 
 Reads and writes stay on `default` (tenant models get a bring-your-own-storage
-router in a later milestone, ENGINEERING_NOTES.md §1).
+router in a later milestone, ENGINEERING_NOTES.md §1). The platform admin picks the
+`platform` alias explicitly per query (common/admin.py) rather than through this router.
 """
 
 from typing import Any
