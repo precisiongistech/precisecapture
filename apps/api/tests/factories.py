@@ -5,6 +5,15 @@ from factory.django import DjangoModelFactory
 
 from precisecapture.accounts.models import Device, User
 from precisecapture.orgs.models import Membership, Organisation, Role
+from precisecapture.projects.models import (
+    GeometryType,
+    Layer,
+    LayerSchemaVersion,
+    LayerTemplate,
+    Project,
+    ProjectMember,
+    ProjectRole,
+)
 
 
 class UserFactory(DjangoModelFactory[User]):
@@ -48,3 +57,56 @@ class DeviceFactory(DjangoModelFactory[Device]):
     model = "Tecno Spark 10"
     os_version = "13"
     app_version = "0.1.0"
+
+
+# --- tenant models: pass org= explicitly or create them inside tenant_context(org.id) ---
+
+
+class ProjectFactory(DjangoModelFactory[Project]):
+    class Meta:
+        model = Project
+
+    org = factory.SubFactory(OrganisationFactory)
+    name = factory.Sequence(lambda n: f"Project {n}")
+    status = Project.Status.ACTIVE
+
+
+class ProjectMemberFactory(DjangoModelFactory[ProjectMember]):
+    class Meta:
+        model = ProjectMember
+
+    project = factory.SubFactory(ProjectFactory)
+    org = factory.LazyAttribute(lambda o: o.project.org)
+    user = factory.SubFactory(UserFactory)
+    role = ProjectRole.COLLECTOR
+
+
+class LayerFactory(DjangoModelFactory[Layer]):
+    class Meta:
+        model = Layer
+
+    project = factory.SubFactory(ProjectFactory)
+    org = factory.LazyAttribute(lambda o: o.project.org)
+    name = factory.Sequence(lambda n: f"Layer {n}")
+    key = factory.Sequence(lambda n: f"lyr_{n}")
+    geometry_type = GeometryType.POLYGON
+
+
+class LayerSchemaVersionFactory(DjangoModelFactory[LayerSchemaVersion]):
+    class Meta:
+        model = LayerSchemaVersion
+
+    layer = factory.SubFactory(LayerFactory)
+    org = factory.LazyAttribute(lambda o: o.layer.org)
+    version = 1
+    attributes = {"schemaVersion": 1, "fields": [{"key": "name", "type": "text"}]}
+
+
+class LayerTemplateFactory(DjangoModelFactory[LayerTemplate]):
+    class Meta:
+        model = LayerTemplate
+
+    org = factory.SubFactory(OrganisationFactory)
+    name = factory.Sequence(lambda n: f"Template {n}")
+    geometry_type = GeometryType.POINT
+    attributes = {"schemaVersion": 1, "fields": [{"key": "name", "type": "text"}]}
