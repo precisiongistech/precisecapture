@@ -1,0 +1,1775 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PreciseCapture API",
+    "version": "1.0.0",
+    "description": "GIS field data collection platform. Geometry on the wire is GeoJSON in EPSG:4326; errors are RFC 9457 problem JSON; timestamps are ISO 8601 UTC."
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Liveness and readiness: 200 when the database answers, 503 otherwise.",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
+    "/api/v1/.well-known/precisecapture": {
+      "get": {
+        "operationId": "wellKnown",
+        "summary": "Well Known",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WellKnownOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Server discovery document (also served at the site root, RFC 8615 style).",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "login",
+        "summary": "Login",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Password login with an email or phone identifier.\n\nReturns a 15 minute access JWT and a 30 day rotating refresh token.",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "refresh",
+        "summary": "Refresh",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Rotate a refresh token. Reusing an already rotated token revokes the whole chain.",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "summary": "Logout",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "description": "Revoke the refresh token chain. Idempotent.",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/auth/otp/request": {
+      "post": {
+        "operationId": "otpRequest",
+        "summary": "Otp Request",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpRequestOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Send a one-time code by SMS or email. The reply never reveals whether the account exists.",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpRequestIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/auth/otp/verify": {
+      "post": {
+        "operationId": "otpVerify",
+        "summary": "Otp Verify",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Exchange a one-time code for tokens. 5 wrong attempts invalidate the code.",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpVerifyIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "operationId": "me",
+        "summary": "Me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "The current user and every organisation they belong to.",
+        "tags": [
+          "me"
+        ],
+        "security": [
+          {
+            "UserAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/projects": {
+      "get": {
+        "operationId": "myProjects",
+        "summary": "My Projects",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "description": "Projects the user is assigned to across all their organisations (filled in M3).",
+        "tags": [
+          "me"
+        ],
+        "security": [
+          {
+            "UserAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/devices": {
+      "post": {
+        "operationId": "registerDevice",
+        "summary": "Register Device",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Register (or update) this device. Send the client-generated UUIDv7 as `id`.",
+        "tags": [
+          "devices"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "UserAuth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "listDevices",
+        "summary": "List Devices",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "devices"
+        ],
+        "security": [
+          {
+            "UserAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/devices/{device_id}": {
+      "delete": {
+        "operationId": "revokeDevice",
+        "summary": "Revoke Device",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Device Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "description": "Revoke a lost device: its refresh tokens stop working immediately.",
+        "tags": [
+          "devices"
+        ],
+        "security": [
+          {
+            "UserAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/orgs": {
+      "post": {
+        "operationId": "createOrg",
+        "summary": "Create Org",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Create an organisation. The creator becomes its owner.",
+        "tags": [
+          "orgs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "UserAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}": {
+      "get": {
+        "operationId": "getOrg",
+        "summary": "Get Org",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "orgs"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateOrg",
+        "summary": "Update Org",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Owners and admins may change name, slug, country and settings (incl. capture defaults).",
+        "tags": [
+          "orgs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/members": {
+      "get": {
+        "operationId": "listMembers",
+        "summary": "List Members",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "orgs"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/members/{user_id}": {
+      "patch": {
+        "operationId": "updateMemberRole",
+        "summary": "Update Member",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "orgs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "removeMember",
+        "summary": "Remove Member",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "description": "Admins remove members; any member may remove themselves (except the last owner).",
+        "tags": [
+          "orgs"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/invitations": {
+      "post": {
+        "operationId": "inviteMember",
+        "summary": "Invite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Invite by email or phone. The token travels only in the message, never in this response.",
+        "tags": [
+          "orgs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "listInvitations",
+        "summary": "List Invitations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InvitationOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "orgs"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/orgs/{org_id}/invitations/{invitation_id}": {
+      "delete": {
+        "operationId": "revokeInvitation",
+        "summary": "Revoke Invitation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Org Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "invitation_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Invitation Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "orgs"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/invitations/{token}": {
+      "get": {
+        "operationId": "previewInvitation",
+        "summary": "Preview Invitation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationPreviewOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "What the invitee sees before accepting: org, role, whether an account must be created.",
+        "tags": [
+          "orgs"
+        ]
+      }
+    },
+    "/api/v1/invitations/{token}/accept": {
+      "post": {
+        "operationId": "acceptInvitation",
+        "summary": "Accept Invitation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationAcceptOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Accept as the logged-in user (bearer token) or create an account (name + password).",
+        "tags": [
+          "orgs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationAcceptIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthOut": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          },
+          "checks": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Checks",
+            "type": "object"
+          }
+        },
+        "required": [
+          "status",
+          "version",
+          "checks"
+        ],
+        "title": "HealthOut",
+        "type": "object"
+      },
+      "WellKnownOut": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "api_version": {
+            "title": "Api Version",
+            "type": "string"
+          },
+          "min_app_version": {
+            "title": "Min App Version",
+            "type": "string"
+          },
+          "auth_methods": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Auth Methods",
+            "type": "array"
+          },
+          "api_base_url": {
+            "title": "Api Base Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "logo_url",
+          "api_version",
+          "min_app_version",
+          "auth_methods",
+          "api_base_url"
+        ],
+        "title": "WellKnownOut",
+        "type": "object"
+      },
+      "TokenPairOut": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          },
+          "token_type": {
+            "default": "Bearer",
+            "title": "Token Type",
+            "type": "string"
+          },
+          "expires_in": {
+            "description": "Access token lifetime in seconds",
+            "title": "Expires In",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "expires_in"
+        ],
+        "title": "TokenPairOut",
+        "type": "object"
+      },
+      "LoginIn": {
+        "properties": {
+          "identifier": {
+            "description": "Email address or E.164 phone number",
+            "examples": [
+              "ama@example.org"
+            ],
+            "title": "Identifier",
+            "type": "string"
+          },
+          "password": {
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A device registered with POST /devices",
+            "title": "Device Id"
+          }
+        },
+        "required": [
+          "identifier",
+          "password"
+        ],
+        "title": "LoginIn",
+        "type": "object"
+      },
+      "RefreshIn": {
+        "properties": {
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshIn",
+        "type": "object"
+      },
+      "LogoutIn": {
+        "properties": {
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "title": "LogoutIn",
+        "type": "object"
+      },
+      "OtpRequestOut": {
+        "properties": {
+          "detail": {
+            "default": "If an account exists for this destination, a code has been sent.",
+            "title": "Detail",
+            "type": "string"
+          },
+          "expires_in": {
+            "description": "Code lifetime in seconds",
+            "title": "Expires In",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expires_in"
+        ],
+        "title": "OtpRequestOut",
+        "type": "object"
+      },
+      "OtpRequestIn": {
+        "properties": {
+          "destination": {
+            "description": "Email address or E.164 phone number",
+            "title": "Destination",
+            "type": "string"
+          }
+        },
+        "required": [
+          "destination"
+        ],
+        "title": "OtpRequestIn",
+        "type": "object"
+      },
+      "OtpVerifyIn": {
+        "properties": {
+          "destination": {
+            "title": "Destination",
+            "type": "string"
+          },
+          "code": {
+            "maxLength": 8,
+            "minLength": 4,
+            "title": "Code",
+            "type": "string"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          }
+        },
+        "required": [
+          "destination",
+          "code"
+        ],
+        "title": "OtpVerifyIn",
+        "type": "object"
+      },
+      "MeOut": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          },
+          "memberships": {
+            "items": {
+              "$ref": "#/components/schemas/MembershipOut"
+            },
+            "title": "Memberships",
+            "type": "array"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          }
+        },
+        "required": [
+          "user",
+          "memberships",
+          "device_id"
+        ],
+        "title": "MeOut",
+        "type": "object"
+      },
+      "MembershipOut": {
+        "properties": {
+          "org_id": {
+            "format": "uuid",
+            "title": "Org Id",
+            "type": "string"
+          },
+          "org_name": {
+            "title": "Org Name",
+            "type": "string"
+          },
+          "org_slug": {
+            "title": "Org Slug",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "org_id",
+          "org_name",
+          "org_slug",
+          "role",
+          "version"
+        ],
+        "title": "MembershipOut",
+        "type": "object"
+      },
+      "UserOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "phone",
+          "name",
+          "status"
+        ],
+        "title": "UserOut",
+        "type": "object"
+      },
+      "DeviceOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "platform": {
+            "title": "Platform",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "os_version": {
+            "title": "Os Version",
+            "type": "string"
+          },
+          "app_version": {
+            "title": "App Version",
+            "type": "string"
+          },
+          "last_seen_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen At"
+          },
+          "last_sync_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sync At"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          }
+        },
+        "required": [
+          "id",
+          "platform",
+          "model",
+          "os_version",
+          "app_version",
+          "last_seen_at",
+          "last_sync_at",
+          "revoked_at"
+        ],
+        "title": "DeviceOut",
+        "type": "object"
+      },
+      "DeviceIn": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Client-generated UUIDv7; the server keeps it",
+            "title": "Id"
+          },
+          "platform": {
+            "pattern": "^(android|ios|web)$",
+            "title": "Platform",
+            "type": "string"
+          },
+          "model": {
+            "default": "",
+            "title": "Model",
+            "type": "string"
+          },
+          "os_version": {
+            "default": "",
+            "title": "Os Version",
+            "type": "string"
+          },
+          "app_version": {
+            "default": "",
+            "title": "App Version",
+            "type": "string"
+          },
+          "push_token": {
+            "default": "",
+            "title": "Push Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "platform"
+        ],
+        "title": "DeviceIn",
+        "type": "object"
+      },
+      "OrgOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "plan": {
+            "title": "Plan",
+            "type": "string"
+          },
+          "settings": {
+            "additionalProperties": true,
+            "title": "Settings",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "country",
+          "plan",
+          "settings",
+          "created_at"
+        ],
+        "title": "OrgOut",
+        "type": "object"
+      },
+      "OrgCreateIn": {
+        "properties": {
+          "name": {
+            "maxLength": 160,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          },
+          "country": {
+            "default": "",
+            "description": "ISO 3166-1 alpha-2",
+            "maxLength": 2,
+            "title": "Country",
+            "type": "string"
+          },
+          "settings": {
+            "additionalProperties": true,
+            "title": "Settings",
+            "type": "object"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "OrgCreateIn",
+        "type": "object"
+      },
+      "OrgUpdateIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9][a-z0-9-]{1,78}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "maxLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "settings": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settings"
+          }
+        },
+        "title": "OrgUpdateIn",
+        "type": "object"
+      },
+      "MemberOut": {
+        "properties": {
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "joined_at": {
+            "format": "date-time",
+            "title": "Joined At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "phone",
+          "name",
+          "role",
+          "status",
+          "joined_at"
+        ],
+        "title": "MemberOut",
+        "type": "object"
+      },
+      "MemberUpdateIn": {
+        "properties": {
+          "role": {
+            "pattern": "^(owner|admin|manager|collector|viewer)$",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "MemberUpdateIn",
+        "type": "object"
+      },
+      "InvitationOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "org_id": {
+            "format": "uuid",
+            "title": "Org Id",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "accepted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted At"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          }
+        },
+        "required": [
+          "id",
+          "org_id",
+          "email",
+          "phone",
+          "role",
+          "expires_at",
+          "accepted_at",
+          "revoked_at"
+        ],
+        "title": "InvitationOut",
+        "type": "object"
+      },
+      "InvitationIn": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "default": "collector",
+            "pattern": "^(owner|admin|manager|collector|viewer)$",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "title": "InvitationIn",
+        "type": "object"
+      },
+      "InvitationPreviewOut": {
+        "properties": {
+          "org_name": {
+            "title": "Org Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "destination": {
+            "title": "Destination",
+            "type": "string"
+          },
+          "account_exists": {
+            "title": "Account Exists",
+            "type": "boolean"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "org_name",
+          "role",
+          "destination",
+          "account_exists",
+          "expires_at"
+        ],
+        "title": "InvitationPreviewOut",
+        "type": "object"
+      },
+      "InvitationAcceptOut": {
+        "properties": {
+          "org_id": {
+            "format": "uuid",
+            "title": "Org Id",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "access_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Token"
+          },
+          "refresh_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token"
+          },
+          "token_type": {
+            "default": "Bearer",
+            "title": "Token Type",
+            "type": "string"
+          },
+          "expires_in": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires In"
+          }
+        },
+        "required": [
+          "org_id",
+          "role",
+          "access_token",
+          "refresh_token",
+          "expires_in"
+        ],
+        "title": "InvitationAcceptOut",
+        "type": "object"
+      },
+      "InvitationAcceptIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Required when creating a new account",
+            "title": "Name"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "minLength": 8,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set for a new account (or use OTP later)",
+            "title": "Password"
+          }
+        },
+        "title": "InvitationAcceptIn",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "UserAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "TenantAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "servers": []
+}

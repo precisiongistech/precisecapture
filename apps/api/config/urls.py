@@ -16,5 +16,8 @@ urlpatterns = [
 handler404 = "precisecapture.common.errors.handler404"
 handler500 = "precisecapture.common.errors.handler500"
 
-if settings.PLATFORM_ADMIN_ENABLED:  # pragma: no cover - wired in M2
-    pass
+if settings.PLATFORM_ADMIN_ENABLED:  # pragma: no cover - exercised manually, internal deployment
+    from django.contrib import admin
+
+    admin.site.site_header = f"{settings.INSTANCE_NAME} platform admin"
+    urlpatterns.append(path("platform-admin/", admin.site.urls))

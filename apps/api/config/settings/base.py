@@ -32,7 +32,7 @@ API_VERSION = "1"
 # Oldest mobile app version this server accepts.
 MIN_APP_VERSION = env.str("MIN_APP_VERSION", default="0.1.0")
 # Auth methods the login screen may offer. Extended in M2 (otp, qr).
-AUTH_METHODS: list[str] = ["password"]
+AUTH_METHODS: list[str] = ["password", "otp"]
 
 PLATFORM_ADMIN_ENABLED = env.bool("PLATFORM_ADMIN_ENABLED", default=False)
 
@@ -46,13 +46,38 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     "ninja",  # management command export_openapi_schema (make contract)
     "precisecapture.common",
+    "precisecapture.accounts",
+    "precisecapture.orgs",
 ]
+
+AUTH_USER_MODEL = "accounts.User"
+
+if PLATFORM_ADMIN_ENABLED:
+    # Internal-only deployment: Django admin for platform staff, reading/writing through the
+    # `platform` alias (see common/admin.py). Never enabled on the public web process.
+    INSTALLED_APPS += [
+        "django.contrib.admin",
+        "django.contrib.sessions",
+        "django.contrib.messages",
+        "django.contrib.staticfiles",
+    ]
+    STATIC_URL = "static/"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Clears the tenant contextvar after each request. The tenant itself is set by the Ninja
+    # auth class inside the request transaction (ENGINEERING_NOTES.md §1), not here.
+    "precisecapture.common.middleware.TenantContextResetMiddleware",
 ]
+if PLATFORM_ADMIN_ENABLED:
+    MIDDLEWARE += [
+        "django.contrib.sessions.middleware.SessionMiddleware",
+        "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "django.contrib.messages.middleware.MessageMiddleware",
+    ]
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
@@ -63,7 +88,13 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],
         "APP_DIRS": True,
-        "OPTIONS": {"context_processors": []},
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ]
+        },
     }
 ]
 
@@ -125,11 +156,25 @@ JWT_SIGNING_KEY = env.str("JWT_SIGNING_KEY", default=SECRET_KEY)
 JWT_ACCESS_TTL_SECONDS = env.int("JWT_ACCESS_TTL_SECONDS", default=900)
 JWT_REFRESH_TTL_DAYS = env.int("JWT_REFRESH_TTL_DAYS", default=30)
 OTP_TTL_SECONDS = env.int("OTP_TTL_SECONDS", default=600)
+OTP_MAX_ATTEMPTS = env.int("OTP_MAX_ATTEMPTS", default=5)
 SMS_BACKEND = env.str("SMS_BACKEND", default="console")
 
-# --- Celery / Redis ---------------------------------------------------------
+# Rate limits: "<count>/<seconds>". Enforced with the cache (Redis in dev/prod).
+RATE_LIMIT_LOGIN_PER_IDENTIFIER = env.str("RATE_LIMIT_LOGIN_PER_IDENTIFIER", default="10/900")
+RATE_LIMIT_LOGIN_PER_IP = env.str("RATE_LIMIT_LOGIN_PER_IP", default="50/900")
+RATE_LIMIT_OTP_PER_DESTINATION = env.str("RATE_LIMIT_OTP_PER_DESTINATION", default="5/3600")
+RATE_LIMIT_OTP_PER_IP = env.str("RATE_LIMIT_OTP_PER_IP", default="20/3600")
+
+# --- Celery / Redis / cache --------------------------------------------------
 
 REDIS_URL = env.str("REDIS_URL", default="redis://localhost:6379/0")
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+        "KEY_PREFIX": "pc",
+    }
+}
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", default=REDIS_URL)
 CELERY_RESULT_BACKEND = env.str("CELERY_RESULT_BACKEND", default=REDIS_URL)
 CELERY_TASK_SERIALIZER = "json"
