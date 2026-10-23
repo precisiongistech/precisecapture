@@ -93,3 +93,33 @@ def me(user: User, device_id: uuid.UUID | None) -> dict[str, Any]:
         ],
         "device_id": device_id,
     }
+
+
+def my_projects(user: User) -> list[dict[str, Any]]:
+    """Projects across all the user's organisations, one tenant_context per org."""
+    from precisecapture.common.permissions import effective_project_role
+    from precisecapture.common.tenancy import tenant_context
+    from precisecapture.projects.models import ProjectMember
+    from precisecapture.projects.services import visible_projects
+
+    out: list[dict[str, Any]] = []
+    for m in Membership.objects.select_related("org").filter(user=user).order_by("org__name"):
+        with tenant_context(m.org_id):
+            pm_roles = dict(
+                ProjectMember.objects.filter(user=user).values_list("project_id", "role")
+            )
+            for p in visible_projects(m):
+                if p.status == p.Status.ARCHIVED:
+                    continue
+                out.append(
+                    {
+                        "id": p.id,
+                        "name": p.name,
+                        "status": p.status,
+                        "org_id": m.org_id,
+                        "org_name": m.org.name,
+                        "role": effective_project_role(m, pm_roles.get(p.id)),
+                        "config_version": p.config_version,
+                    }
+                )
+    return out

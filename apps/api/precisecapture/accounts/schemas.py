@@ -82,3 +82,13 @@ class OtpVerifyIn(Schema):
     destination: str
     code: str = Field(..., min_length=4, max_length=8)
     device_id: uuid.UUID | None = None
+
+
+class MyProjectOut(Schema):
+    id: uuid.UUID
+    name: str
+    status: str
+    org_id: uuid.UUID
+    org_name: str
+    role: str | None
+    config_version: int

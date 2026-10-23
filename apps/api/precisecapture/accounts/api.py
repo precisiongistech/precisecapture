@@ -14,6 +14,7 @@ from precisecapture.accounts.schemas import (
     LoginIn,
     LogoutIn,
     MeOut,
+    MyProjectOut,
     OtpRequestIn,
     OtpRequestOut,
     OtpVerifyIn,
@@ -69,12 +70,10 @@ def me(request: HttpRequest) -> dict[str, Any]:
     return services.me(current_user(request), current_device_id(request))
 
 
-@me_router.get(
-    "/projects", response=list[dict[str, Any]], auth=user_auth, operation_id="myProjects"
-)
+@me_router.get("/projects", response=list[MyProjectOut], auth=user_auth, operation_id="myProjects")
 def my_projects(request: HttpRequest) -> list[dict[str, Any]]:
-    """Projects the user is assigned to across all their organisations (filled in M3)."""
-    return []
+    """Non-archived projects the user can open, across all their organisations."""
+    return services.my_projects(current_user(request))
 
 
 @devices_router.post("", response={201: DeviceOut}, auth=user_auth, operation_id="registerDevice")

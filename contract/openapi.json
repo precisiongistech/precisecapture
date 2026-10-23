@@ -260,8 +260,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": true,
-                    "type": "object"
+                    "$ref": "#/components/schemas/MyProjectOut"
                   },
                   "title": "Response",
                   "type": "array"
@@ -270,7 +269,7 @@
             }
           }
         },
-        "description": "Projects the user is assigned to across all their organisations (filled in M3).",
+        "description": "Non-archived projects the user can open, across all their organisations.",
         "tags": [
           "me"
         ],
@@ -848,6 +847,1142 @@
           "required": true
         }
       }
+    },
+    "/api/v1/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "summary": "List Projects",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createProject",
+        "summary": "Create Project",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Org managers and above create projects.",
+        "tags": [
+          "projects"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}": {
+      "get": {
+        "operationId": "getProject",
+        "summary": "Get Project",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateProject",
+        "summary": "Update Project",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectPatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/members": {
+      "get": {
+        "operationId": "listProjectMembers",
+        "summary": "List Members",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectMemberOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "addProjectMember",
+        "summary": "Add Member",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMemberOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectMemberIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/members/{user_id}": {
+      "patch": {
+        "operationId": "updateProjectMember",
+        "summary": "Update Member",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMemberOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectMemberPatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "removeProjectMember",
+        "summary": "Remove Member",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "projects"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/layers": {
+      "get": {
+        "operationId": "listLayers",
+        "summary": "List Layers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LayerOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createLayer",
+        "summary": "Create Layer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayerOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/layers/from-template": {
+      "post": {
+        "operationId": "createLayerFromTemplate",
+        "summary": "Create Layer From Template",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayerOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayerFromTemplateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/layers/order": {
+      "put": {
+        "operationId": "reorderLayers",
+        "summary": "Reorder Layers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LayerOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayerReorderIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/bundle": {
+      "get": {
+        "operationId": "getProjectBundle",
+        "summary": "Bundle",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "description": "Everything a phone needs offline. ETag = hash(config_version, membership version, project\nrole); If-None-Match gives 304. The server_seq watermark travels in X-Server-Seq (0 until M6).",
+        "tags": [
+          "projects"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/layers/{layer_id}": {
+      "get": {
+        "operationId": "getLayer",
+        "summary": "Get Layer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayerOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "layers"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateLayer",
+        "summary": "Update Layer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayerOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "layers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayerPatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteLayer",
+        "summary": "Delete Layer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "description": "Allowed while the layer has no features.",
+        "tags": [
+          "layers"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/layers/{layer_id}/schema": {
+      "get": {
+        "operationId": "getLayerSchema",
+        "summary": "Get Schema",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "layers"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "saveLayerSchemaDraft",
+        "summary": "Save Draft",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Save the draft attribute list. Publishing runs the full validation.",
+        "tags": [
+          "layers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchemaDraftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/layers/{layer_id}/schema/validate": {
+      "post": {
+        "operationId": "validateLayerSchema",
+        "summary": "Validate Draft",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/SchemaPublishOut"
+                    },
+                    {
+                      "additionalProperties": true,
+                      "type": "object"
+                    }
+                  ],
+                  "title": "Response"
+                }
+              }
+            }
+          }
+        },
+        "description": "Dry run of publish: returns {errors: []} without writing anything.",
+        "tags": [
+          "layers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchemaDraftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/layers/{layer_id}/schema/publish": {
+      "post": {
+        "operationId": "publishLayerSchema",
+        "summary": "Publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaPublishOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Validate the draft, create an immutable version, bump config_version. 422 = errors.",
+        "tags": [
+          "layers"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/layers/{layer_id}/schema/versions": {
+      "get": {
+        "operationId": "listLayerSchemaVersions",
+        "summary": "List Versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SchemaVersionOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "layers"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/layers/{layer_id}/schema/versions/{version}": {
+      "get": {
+        "operationId": "getLayerSchemaVersion",
+        "summary": "Get Version",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaVersionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "layers"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/layers/{layer_id}/capture-profile": {
+      "get": {
+        "operationId": "getCaptureProfile",
+        "summary": "Get Capture Profile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptureProfileOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "layers"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "saveCaptureProfile",
+        "summary": "Save Capture Profile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptureProfileOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Validated against the JSON Schema and the cross-field rules; bumps config_version.",
+        "tags": [
+          "layers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaptureProfileIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/layers/{layer_id}/save-as-template": {
+      "post": {
+        "operationId": "saveLayerAsTemplate",
+        "summary": "Save As Template",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "layers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/layer-templates": {
+      "get": {
+        "operationId": "listLayerTemplates",
+        "summary": "List Templates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "layers"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/layer-templates/{template_id}": {
+      "delete": {
+        "operationId": "deleteLayerTemplate",
+        "summary": "Delete Template",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Template Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "layers"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1195,6 +2330,58 @@
           "status"
         ],
         "title": "UserOut",
+        "type": "object"
+      },
+      "MyProjectOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "org_id": {
+            "format": "uuid",
+            "title": "Org Id",
+            "type": "string"
+          },
+          "org_name": {
+            "title": "Org Name",
+            "type": "string"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "config_version": {
+            "title": "Config Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "org_id",
+          "org_name",
+          "role",
+          "config_version"
+        ],
+        "title": "MyProjectOut",
         "type": "object"
       },
       "DeviceOut": {
@@ -1757,6 +2944,789 @@
           }
         },
         "title": "InvitationAcceptIn",
+        "type": "object"
+      },
+      "ProjectOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "extent": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extent"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "settings": {
+            "additionalProperties": true,
+            "title": "Settings",
+            "type": "object"
+          },
+          "config_version": {
+            "title": "Config Version",
+            "type": "integer"
+          },
+          "my_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "My Role"
+          },
+          "layer_count": {
+            "default": 0,
+            "title": "Layer Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "extent",
+          "status",
+          "settings",
+          "config_version",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ProjectOut",
+        "type": "object"
+      },
+      "ProjectIn": {
+        "properties": {
+          "name": {
+            "maxLength": 160,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "extent": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "GeoJSON Polygon in EPSG:4326",
+            "title": "Extent"
+          },
+          "status": {
+            "default": "draft",
+            "pattern": "^(draft|active|archived)$",
+            "title": "Status",
+            "type": "string"
+          },
+          "settings": {
+            "additionalProperties": true,
+            "description": "May hold \"capture_profile\" (partial)",
+            "title": "Settings",
+            "type": "object"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ProjectIn",
+        "type": "object"
+      },
+      "ProjectPatchIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "extent": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extent"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "pattern": "^(draft|active|archived)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "settings": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settings"
+          }
+        },
+        "title": "ProjectPatchIn",
+        "type": "object"
+      },
+      "ProjectMemberOut": {
+        "properties": {
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "assigned_area": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Area"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id",
+          "name",
+          "email",
+          "phone",
+          "role",
+          "assigned_area",
+          "version"
+        ],
+        "title": "ProjectMemberOut",
+        "type": "object"
+      },
+      "ProjectMemberIn": {
+        "properties": {
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          },
+          "role": {
+            "default": "collector",
+            "pattern": "^(manager|collector|viewer)$",
+            "title": "Role",
+            "type": "string"
+          },
+          "assigned_area": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "GeoJSON MultiPolygon or Polygon",
+            "title": "Assigned Area"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "ProjectMemberIn",
+        "type": "object"
+      },
+      "ProjectMemberPatchIn": {
+        "properties": {
+          "role": {
+            "anyOf": [
+              {
+                "pattern": "^(manager|collector|viewer)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "assigned_area": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Area"
+          },
+          "clear_assigned_area": {
+            "default": false,
+            "title": "Clear Assigned Area",
+            "type": "boolean"
+          }
+        },
+        "title": "ProjectMemberPatchIn",
+        "type": "object"
+      },
+      "LayerOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "geometry_type": {
+            "title": "Geometry Type",
+            "type": "string"
+          },
+          "style": {
+            "additionalProperties": true,
+            "title": "Style",
+            "type": "object"
+          },
+          "capture_profile": {
+            "additionalProperties": true,
+            "title": "Capture Profile",
+            "type": "object"
+          },
+          "current_schema_version": {
+            "title": "Current Schema Version",
+            "type": "integer"
+          },
+          "has_draft": {
+            "default": false,
+            "title": "Has Draft",
+            "type": "boolean"
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "name",
+          "key",
+          "geometry_type",
+          "style",
+          "capture_profile",
+          "current_schema_version",
+          "sort_order",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "LayerOut",
+        "type": "object"
+      },
+      "LayerIn": {
+        "properties": {
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "key": {
+            "pattern": "^[a-z][a-z0-9_]{0,62}$",
+            "title": "Key",
+            "type": "string"
+          },
+          "geometry_type": {
+            "pattern": "^(point|line|polygon|none)$",
+            "title": "Geometry Type",
+            "type": "string"
+          },
+          "style": {
+            "additionalProperties": true,
+            "title": "Style",
+            "type": "object"
+          },
+          "capture_profile": {
+            "additionalProperties": true,
+            "title": "Capture Profile",
+            "type": "object"
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
+          }
+        },
+        "required": [
+          "name",
+          "key",
+          "geometry_type"
+        ],
+        "title": "LayerIn",
+        "type": "object"
+      },
+      "LayerFromTemplateIn": {
+        "properties": {
+          "template_id": {
+            "format": "uuid",
+            "title": "Template Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "key": {
+            "pattern": "^[a-z][a-z0-9_]{0,62}$",
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "name",
+          "key"
+        ],
+        "title": "LayerFromTemplateIn",
+        "type": "object"
+      },
+      "LayerReorderIn": {
+        "properties": {
+          "layer_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Layer Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "layer_ids"
+        ],
+        "title": "LayerReorderIn",
+        "type": "object"
+      },
+      "LayerPatchIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "style": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Style"
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
+          }
+        },
+        "title": "LayerPatchIn",
+        "type": "object"
+      },
+      "SchemaOut": {
+        "properties": {
+          "layer_id": {
+            "format": "uuid",
+            "title": "Layer Id",
+            "type": "string"
+          },
+          "current_version": {
+            "title": "Current Version",
+            "type": "integer"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current"
+          },
+          "draft": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Draft"
+          },
+          "draft_differs": {
+            "title": "Draft Differs",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "layer_id",
+          "current_version",
+          "current",
+          "draft",
+          "draft_differs"
+        ],
+        "title": "SchemaOut",
+        "type": "object"
+      },
+      "SchemaDraftIn": {
+        "properties": {
+          "attributes": {
+            "additionalProperties": true,
+            "description": "A layer attribute schema document",
+            "title": "Attributes",
+            "type": "object"
+          }
+        },
+        "required": [
+          "attributes"
+        ],
+        "title": "SchemaDraftIn",
+        "type": "object"
+      },
+      "SchemaPublishOut": {
+        "properties": {
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "config_version": {
+            "title": "Config Version",
+            "type": "integer"
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "version",
+          "config_version"
+        ],
+        "title": "SchemaPublishOut",
+        "type": "object"
+      },
+      "SchemaVersionOut": {
+        "properties": {
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "published_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published By"
+          }
+        },
+        "required": [
+          "version",
+          "attributes",
+          "published_at",
+          "published_by"
+        ],
+        "title": "SchemaVersionOut",
+        "type": "object"
+      },
+      "CaptureProfileOut": {
+        "properties": {
+          "layer_id": {
+            "format": "uuid",
+            "title": "Layer Id",
+            "type": "string"
+          },
+          "capture_profile": {
+            "additionalProperties": true,
+            "description": "The layer's own (partial) profile",
+            "title": "Capture Profile",
+            "type": "object"
+          },
+          "resolved": {
+            "additionalProperties": true,
+            "description": "org -> project -> layer merge, what the phone obeys",
+            "title": "Resolved",
+            "type": "object"
+          },
+          "config_version": {
+            "title": "Config Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "layer_id",
+          "capture_profile",
+          "resolved",
+          "config_version"
+        ],
+        "title": "CaptureProfileOut",
+        "type": "object"
+      },
+      "CaptureProfileIn": {
+        "properties": {
+          "capture_profile": {
+            "additionalProperties": true,
+            "title": "Capture Profile",
+            "type": "object"
+          }
+        },
+        "required": [
+          "capture_profile"
+        ],
+        "title": "CaptureProfileIn",
+        "type": "object"
+      },
+      "TemplateOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "geometry_type": {
+            "title": "Geometry Type",
+            "type": "string"
+          },
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          },
+          "capture_profile": {
+            "additionalProperties": true,
+            "title": "Capture Profile",
+            "type": "object"
+          },
+          "style": {
+            "additionalProperties": true,
+            "title": "Style",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "geometry_type",
+          "attributes",
+          "capture_profile",
+          "style",
+          "created_at"
+        ],
+        "title": "TemplateOut",
+        "type": "object"
+      },
+      "TemplateIn": {
+        "properties": {
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "TemplateIn",
         "type": "object"
       }
     },
