@@ -239,7 +239,14 @@ def update_layer(layer: Layer, data: dict[str, Any]) -> Layer:
 
 
 def delete_layer(layer: Layer) -> None:
-    """Allowed while no features exist (M5 turns this into archive-only)."""
+    """Allowed only while the layer has no features (including soft-deleted ones)."""
+    from precisecapture.features.models import Feature
+
+    if Feature.all_tenants.filter(layer=layer).exists():
+        raise Conflict(
+            "The layer has features and cannot be deleted; archive the project instead "
+            "(layer archiving arrives with the data views)"
+        )
     project = layer.project
     layer.delete()
     project.bump_config_version()
