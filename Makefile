@@ -12,7 +12,7 @@ SCHEMA_DIR := packages/schema
 
 .PHONY: help dev-up dev-down dev-logs dev-reset api-install api-migrate api-makemigrations api-run \
         api-worker api-shell api-test api-test-integration api-lint api-format contract mock \
-        web-dev web-test web-lint schema-test check
+        web-dev web-test web-lint schema-build schema-test check
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -90,9 +90,12 @@ web-lint: ## eslint + prettier + tsc
 
 # --- Shared schema -------------------------------------------------------------
 
-schema-test: ## Validate examples against JSON Schemas; run expression test vectors (TS + Python)
-	@if [ -f $(SCHEMA_DIR)/package.json ]; then pnpm --filter @precisecapture/schema test; \
-	 else echo "packages/schema is not a pnpm package yet (M1)"; fi
-	@if [ -d $(API_DIR)/tests/schema ]; then $(API) pytest tests/schema; fi
+schema-build: ## Build packages/schema (dist/)
+	pnpm --filter @precisecapture/schema build
+
+schema-test: ## Validate examples against JSON Schemas; run the shared test vectors (TS + Python)
+	pnpm --filter @precisecapture/schema lint
+	pnpm --filter @precisecapture/schema test
+	$(API) pytest tests/schema
 
 check: api-lint api-test ## Everything CI runs for the API

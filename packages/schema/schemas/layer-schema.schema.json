@@ -5,24 +5,44 @@
   "description": "A layer's attributes. The same document is the form the collector fills in, in field order. Published versions are immutable; keys are stable forever.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "fields"],
+  "required": [
+    "schemaVersion",
+    "fields"
+  ],
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "layerId": { "type": "string" },
-    "version": { "type": "integer", "minimum": 1 },
-    "title": { "$ref": "#/$defs/i18n" },
-    "defaultLanguage": { "type": "string", "default": "en" },
+    "schemaVersion": {
+      "const": 1
+    },
+    "layerId": {
+      "$ref": "#/$defs/layerKey",
+      "description": "Key of the layer this schema belongs to (informational; the server sets it)."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "title": {
+      "$ref": "#/$defs/i18n"
+    },
+    "defaultLanguage": {
+      "type": "string",
+      "default": "en"
+    },
     "fields": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/field" }
+      "items": {
+        "$ref": "#/$defs/field"
+      }
     },
     "lists": {
       "type": "object",
       "description": "Named option lists referenced as 'list:<name>'.",
       "additionalProperties": {
         "type": "array",
-        "items": { "$ref": "#/$defs/option" }
+        "items": {
+          "$ref": "#/$defs/option"
+        }
       }
     }
   },
@@ -30,12 +50,18 @@
     "i18n": {
       "description": "A plain string or a map of language code to text.",
       "oneOf": [
-        { "type": "string" },
+        {
+          "type": "string"
+        },
         {
           "type": "object",
           "minProperties": 1,
-          "additionalProperties": { "type": "string" },
-          "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$" }
+          "additionalProperties": {
+            "type": "string"
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$"
+          }
         }
       ]
     },
@@ -47,42 +73,104 @@
     "option": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["value", "label"],
+      "required": [
+        "value",
+        "label"
+      ],
       "properties": {
-        "value": { "type": ["string", "number"] },
-        "label": { "$ref": "#/$defs/i18n" },
+        "value": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "label": {
+          "$ref": "#/$defs/i18n"
+        },
         "filter": {
           "type": "object",
           "description": "For cascading selects: parent field key -> parent value.",
-          "additionalProperties": { "type": ["string", "number"] }
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number"
+            ]
+          }
         }
       }
     },
     "field": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["key", "type"],
+      "required": [
+        "key",
+        "type"
+      ],
       "properties": {
-        "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,62}$" },
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,62}$"
+        },
         "type": {
           "enum": [
-            "text", "number", "integer", "decimal", "date", "time", "datetime",
-            "select_one", "select_many", "yes_no", "phone", "email",
-            "photo", "audio", "video", "file", "signature", "barcode",
-            "calculate", "note", "repeat", "group", "geopoint", "relation"
+            "text",
+            "number",
+            "integer",
+            "decimal",
+            "date",
+            "time",
+            "datetime",
+            "select_one",
+            "select_many",
+            "yes_no",
+            "phone",
+            "email",
+            "photo",
+            "audio",
+            "video",
+            "file",
+            "signature",
+            "barcode",
+            "calculate",
+            "note",
+            "repeat",
+            "group",
+            "geopoint",
+            "relation"
           ]
         },
-        "label": { "$ref": "#/$defs/i18n" },
-        "hint": { "$ref": "#/$defs/i18n" },
+        "label": {
+          "$ref": "#/$defs/i18n"
+        },
+        "hint": {
+          "$ref": "#/$defs/i18n"
+        },
         "required": {
           "description": "true/false, or an expression evaluated at capture time.",
-          "oneOf": [{ "type": "boolean" }, { "$ref": "#/$defs/expression" }]
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/expression"
+            }
+          ]
         },
-        "relevant": { "$ref": "#/$defs/expression" },
-        "constraint": { "$ref": "#/$defs/expression" },
-        "constraintMessage": { "$ref": "#/$defs/i18n" },
-        "expression": { "$ref": "#/$defs/expression" },
-        "readonly": { "type": "boolean" },
+        "relevant": {
+          "$ref": "#/$defs/expression"
+        },
+        "constraint": {
+          "$ref": "#/$defs/expression"
+        },
+        "constraintMessage": {
+          "$ref": "#/$defs/i18n"
+        },
+        "expression": {
+          "$ref": "#/$defs/expression"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "default": {},
         "sticky": {
           "type": "boolean",
@@ -91,8 +179,17 @@
         "options": {
           "description": "'list:<name>' or an inline array.",
           "oneOf": [
-            { "type": "string", "pattern": "^list:[a-z][a-z0-9_]*$" },
-            { "type": "array", "items": { "$ref": "#/$defs/option" }, "minItems": 1 }
+            {
+              "type": "string",
+              "pattern": "^list:[a-z][a-z0-9_]*$"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/option"
+              },
+              "minItems": 1
+            }
           ]
         },
         "choiceFilterParent": {
@@ -103,30 +200,69 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "min": { "type": "number" },
-            "max": { "type": "number" },
-            "minLength": { "type": "integer", "minimum": 0 },
-            "maxLength": { "type": "integer", "minimum": 1 },
-            "pattern": { "type": "string" }
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            },
+            "minLength": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "maxLength": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "pattern": {
+              "type": "string"
+            }
           }
         },
-        "min": { "type": "integer", "minimum": 0, "description": "Minimum count for photo/file/repeat." },
-        "max": { "type": "integer", "minimum": 1, "description": "Maximum count for photo/file/repeat." },
-        "maxDimensionPx": { "type": "integer", "minimum": 320, "maximum": 8000 },
-        "stamp": { "type": "boolean", "description": "Stamp photos with GPS position and time." },
+        "min": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum count for photo/file/repeat."
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum count for photo/file/repeat."
+        },
+        "maxDimensionPx": {
+          "type": "integer",
+          "minimum": 320,
+          "maximum": 8000
+        },
+        "stamp": {
+          "type": "boolean",
+          "description": "Stamp photos with GPS position and time."
+        },
         "relation": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["layer"],
+          "required": [
+            "layer"
+          ],
           "properties": {
-            "layer": { "type": "string", "description": "Layer key (project-unique slug) of the target layer in the same project. API paths and sync payloads use layer UUIDs; schemas reference layers by key so templates and project copies keep working." },
-            "displayField": { "type": "string" },
-            "allowCreateInline": { "type": "boolean" }
+            "layer": {
+              "type": "string",
+              "description": "Layer key (project-unique slug) of the target layer in the same project. API paths and sync payloads use layer UUIDs; schemas reference layers by key so templates and project copies keep working.",
+              "pattern": "^[a-z][a-z0-9_]{0,62}$"
+            },
+            "displayField": {
+              "type": "string"
+            },
+            "allowCreateInline": {
+              "type": "boolean"
+            }
           }
         },
         "fields": {
           "type": "array",
-          "items": { "$ref": "#/$defs/field" },
+          "items": {
+            "$ref": "#/$defs/field"
+          },
           "minItems": 1
         },
         "unique": {
@@ -140,22 +276,73 @@
       },
       "allOf": [
         {
-          "if": { "properties": { "type": { "enum": ["select_one", "select_many"] } } },
-          "then": { "required": ["options"] }
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "select_one",
+                  "select_many"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "options"
+            ]
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "calculate" } } },
-          "then": { "required": ["expression"] }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "calculate"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "expression"
+            ]
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "relation" } } },
-          "then": { "required": ["relation"] }
+          "if": {
+            "properties": {
+              "type": {
+                "const": "relation"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "relation"
+            ]
+          }
         },
         {
-          "if": { "properties": { "type": { "enum": ["repeat", "group"] } } },
-          "then": { "required": ["fields"] }
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "repeat",
+                  "group"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "fields"
+            ]
+          }
         }
       ]
+    },
+    "layerKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,62}$",
+      "description": "A layer's project-unique key (slug)."
     }
   }
 }

@@ -6,46 +6,98 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "geometryType": { "enum": ["point", "line", "polygon", "none"] },
+    "schemaVersion": {
+      "const": 1
+    },
+    "geometryType": {
+      "enum": [
+        "point",
+        "line",
+        "polygon",
+        "none"
+      ]
+    },
     "modes": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "allowed": {
           "type": "array",
-          "items": { "enum": ["tap", "gps_vertex", "stream", "hybrid"] },
+          "items": {
+            "enum": [
+              "tap",
+              "gps_vertex",
+              "stream",
+              "hybrid"
+            ]
+          },
           "minItems": 1,
           "uniqueItems": true
         },
-        "default": { "enum": ["tap", "gps_vertex", "stream", "hybrid"] },
-        "locked": { "$ref": "#/$defs/locked" }
+        "default": {
+          "enum": [
+            "tap",
+            "gps_vertex",
+            "stream",
+            "hybrid"
+          ]
+        },
+        "locked": {
+          "$ref": "#/$defs/locked"
+        }
       }
     },
-    "autoClose": { "$ref": "#/$defs/toggle" },
-    "minVertices": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "autoClose": {
+      "$ref": "#/$defs/toggle"
+    },
+    "minVertices": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
     "snapping": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "enabled": { "type": "boolean" },
-        "toleranceMeters": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
+        "enabled": {
+          "type": "boolean"
+        },
+        "toleranceMeters": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        },
         "targets": {
           "type": "array",
-          "items": { "enum": ["vertex", "edge"] },
+          "items": {
+            "enum": [
+              "vertex",
+              "edge"
+            ]
+          },
           "uniqueItems": true
         },
-        "layers": { "$ref": "#/$defs/layerRefs" },
-        "locked": { "$ref": "#/$defs/locked" }
+        "layers": {
+          "$ref": "#/$defs/layerRefs"
+        },
+        "locked": {
+          "$ref": "#/$defs/locked"
+        }
       }
     },
     "trace": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "enabled": { "type": "boolean" },
-        "layers": { "$ref": "#/$defs/layerRefs" },
-        "locked": { "$ref": "#/$defs/locked" }
+        "enabled": {
+          "type": "boolean"
+        },
+        "layers": {
+          "$ref": "#/$defs/layerRefs"
+        },
+        "locked": {
+          "$ref": "#/$defs/locked"
+        }
       }
     },
     "stream": {
@@ -53,89 +105,212 @@
       "additionalProperties": false,
       "description": "Streaming capture for lines and polygons. Distance OR time drives it, not both.",
       "properties": {
-        "intervalMeters": { "type": ["number", "null"], "minimum": 1, "maximum": 100 },
+        "intervalMeters": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 100
+        },
         "allowedIntervalsMeters": {
           "type": "array",
-          "items": { "type": "number", "minimum": 1, "maximum": 100 },
+          "items": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100
+          },
           "uniqueItems": true
         },
-        "intervalSeconds": { "type": ["number", "null"], "minimum": 1, "maximum": 600 },
-        "pauseWhenStationary": { "type": "boolean" },
-        "skipVertexIfAccuracyWorseThanMeters": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "intervalSeconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 600
+        },
+        "pauseWhenStationary": {
+          "type": "boolean"
+        },
+        "skipVertexIfAccuracyWorseThanMeters": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0
+        },
         "simplifyOnClose": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "enabled": { "type": "boolean" },
+            "enabled": {
+              "type": "boolean"
+            },
             "toleranceMeters": {
               "oneOf": [
-                { "const": "auto" },
-                { "type": "number", "exclusiveMinimum": 0, "maximum": 50 }
+                {
+                  "const": "auto"
+                },
+                {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 50
+                }
               ]
             }
           }
         },
-        "keepRawTrack": { "type": "boolean" },
-        "locked": { "$ref": "#/$defs/locked" }
+        "keepRawTrack": {
+          "type": "boolean"
+        },
+        "locked": {
+          "$ref": "#/$defs/locked"
+        }
       }
     },
     "gps": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "maxAccuracyMeters": { "type": ["number", "null"], "exclusiveMinimum": 0 },
-        "onPoorAccuracy": { "enum": ["warn", "block", "ignore"] },
+        "maxAccuracyMeters": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0
+        },
+        "onPoorAccuracy": {
+          "enum": [
+            "warn",
+            "block",
+            "ignore"
+          ]
+        },
         "averaging": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "enabled": { "type": "boolean" },
-            "samples": { "type": "integer", "minimum": 2, "maximum": 300 },
-            "locked": { "$ref": "#/$defs/locked" }
+            "enabled": {
+              "type": "boolean"
+            },
+            "samples": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 300
+            },
+            "locked": {
+              "$ref": "#/$defs/locked"
+            }
           }
         },
-        "allowExternalReceiver": { "type": "boolean" },
-        "rejectMockLocation": { "type": "boolean" },
-        "locked": { "$ref": "#/$defs/locked" }
+        "allowExternalReceiver": {
+          "type": "boolean"
+        },
+        "rejectMockLocation": {
+          "type": "boolean"
+        },
+        "locked": {
+          "$ref": "#/$defs/locked"
+        }
       }
     },
-    "offsetPoints": { "$ref": "#/$defs/toggle" },
+    "offsetPoints": {
+      "$ref": "#/$defs/toggle"
+    },
     "validation": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "preventSelfIntersection": { "type": "boolean" },
+        "preventSelfIntersection": {
+          "type": "boolean"
+        },
         "topology": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "noOverlapWith": { "$ref": "#/$defs/layerRefs" },
-            "noGapsWith": { "$ref": "#/$defs/layerRefs" },
-            "onOverlap": { "enum": ["flag", "block"], "default": "flag" },
-            "overlapToleranceSqm": { "type": "number", "minimum": 0, "default": 1 }
+            "noOverlapWith": {
+              "$ref": "#/$defs/layerRefs"
+            },
+            "noGapsWith": {
+              "$ref": "#/$defs/layerRefs"
+            },
+            "onOverlap": {
+              "enum": [
+                "flag",
+                "block"
+              ],
+              "default": "flag"
+            },
+            "overlapToleranceSqm": {
+              "type": "number",
+              "minimum": 0,
+              "default": 1
+            }
           }
         },
-        "minAreaSqm": { "type": ["number", "null"], "minimum": 0 },
-        "maxAreaSqm": { "type": ["number", "null"], "minimum": 0 },
-        "duplicateWarningMeters": { "type": ["number", "null"], "minimum": 0 }
+        "minAreaSqm": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "maxAreaSqm": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "duplicateWarningMeters": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
       }
     },
     "centroid": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "method": { "enum": ["centroid", "point_on_surface"] },
-        "fallback": { "enum": ["point_on_surface", "none"] },
-        "allowPointOnlyCapture": { "type": "boolean" }
+        "method": {
+          "enum": [
+            "centroid",
+            "point_on_surface"
+          ]
+        },
+        "fallback": {
+          "enum": [
+            "point_on_surface",
+            "none"
+          ]
+        },
+        "allowPointOnlyCapture": {
+          "type": "boolean"
+        }
       }
     },
     "display": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "showArea": { "type": "boolean" },
-        "showLength": { "type": "boolean" },
-        "units": { "enum": ["metric", "hectares", "acres", "imperial"] }
+        "showArea": {
+          "type": "boolean"
+        },
+        "showLength": {
+          "type": "boolean"
+        },
+        "units": {
+          "enum": [
+            "metric",
+            "hectares",
+            "acres",
+            "imperial"
+          ]
+        }
       }
     }
   },
@@ -148,14 +323,21 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "enabled": { "type": "boolean" },
-        "locked": { "$ref": "#/$defs/locked" }
+        "enabled": {
+          "type": "boolean"
+        },
+        "locked": {
+          "$ref": "#/$defs/locked"
+        }
       }
     },
     "layerRefs": {
       "type": "array",
       "description": "Layer keys (project-unique slugs) in the same project, or the literal 'self'.",
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "pattern": "^(self|[a-z][a-z0-9_]{0,62})$"
+      },
       "uniqueItems": true
     }
   }
