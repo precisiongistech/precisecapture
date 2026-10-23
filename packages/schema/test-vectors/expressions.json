@@ -1,5 +1,5 @@
 {
-  "description": "Shared test vectors for the PreciseCapture expression language. Both the TypeScript and Python evaluators must pass all cases. Extend to 40+ cases in milestone M1.",
+  "description": "Shared test vectors for the PreciseCapture expression language. Both the TypeScript and Python evaluators must pass every case. See expressions.md for the semantics each case pins down.",
   "defaults": {
     "now": "2026-10-22T10:00:00Z",
     "today": "2026-10-22"
@@ -244,6 +244,746 @@
     {
       "name": "nearest reserved in v1",
       "expr": "nearest('roads', 'name')",
+      "context": {
+        "values": {}
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "mod",
+      "expr": "10 mod 3",
+      "context": {
+        "values": {}
+      },
+      "expect": 1
+    },
+    {
+      "name": "mod by zero is null",
+      "expr": "10 mod 0",
+      "context": {
+        "values": {}
+      },
+      "expect": null
+    },
+    {
+      "name": "unary minus and multiplication",
+      "expr": "-2 * 3",
+      "context": {
+        "values": {}
+      },
+      "expect": -6
+    },
+    {
+      "name": "mixed precedence",
+      "expr": "1 + 2 * 3 - 4 div 2",
+      "context": {
+        "values": {}
+      },
+      "expect": 5
+    },
+    {
+      "name": "nested grouping",
+      "expr": "((1 + 2) * (3 + 4)) div 7",
+      "context": {
+        "values": {}
+      },
+      "expect": 3
+    },
+    {
+      "name": "numeric string arithmetic",
+      "expr": "'3' * 2",
+      "context": {
+        "values": {}
+      },
+      "expect": 6
+    },
+    {
+      "name": "non-numeric string arithmetic is null",
+      "expr": "'abc' + 1",
+      "context": {
+        "values": {}
+      },
+      "expect": null
+    },
+    {
+      "name": "null arithmetic is null",
+      "expr": "${missing} + 1",
+      "context": {
+        "values": {}
+      },
+      "expect": null
+    },
+    {
+      "name": "field arithmetic",
+      "expr": "${a} - ${b}",
+      "context": {
+        "values": {
+          "a": 10,
+          "b": "4"
+        }
+      },
+      "expect": 6
+    },
+    {
+      "name": "integer-valued result",
+      "expr": "7.5 * 2",
+      "context": {
+        "values": {}
+      },
+      "expect": 15
+    },
+    {
+      "name": "numeric string equals number",
+      "expr": "'1.0' = 1",
+      "context": {
+        "values": {}
+      },
+      "expect": true
+    },
+    {
+      "name": "non-numeric string vs number is string compare",
+      "expr": "'abc' = 0",
+      "context": {
+        "values": {}
+      },
+      "expect": false
+    },
+    {
+      "name": "numeric strings compare as numbers",
+      "expr": "'10' > '9'",
+      "context": {
+        "values": {}
+      },
+      "expect": true
+    },
+    {
+      "name": "string ordering",
+      "expr": "'b' > 'a'",
+      "context": {
+        "values": {}
+      },
+      "expect": true
+    },
+    {
+      "name": "dates compare as iso strings",
+      "expr": "${start} < ${end}",
+      "context": {
+        "values": {
+          "start": "2026-10-01",
+          "end": "2026-10-22"
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "ordering with null is null",
+      "expr": "${missing} < 5",
+      "context": {
+        "values": {}
+      },
+      "expect": null
+    },
+    {
+      "name": "ordering non-numeric mixed is null",
+      "expr": "'abc' < 5",
+      "context": {
+        "values": {}
+      },
+      "expect": null
+    },
+    {
+      "name": "equality is lower precedence than ordering",
+      "expr": "1 < 2 = true()",
+      "context": {
+        "values": {}
+      },
+      "expect": true
+    },
+    {
+      "name": "boolean equality",
+      "expr": "true() = true()",
+      "context": {
+        "values": {}
+      },
+      "expect": true
+    },
+    {
+      "name": "string not equal",
+      "expr": "'a' != 'b'",
+      "context": {
+        "values": {}
+      },
+      "expect": true
+    },
+    {
+      "name": "not()",
+      "expr": "not(1 = 1) or 2 > 1",
+      "context": {
+        "values": {}
+      },
+      "expect": true
+    },
+    {
+      "name": "and with null is false",
+      "expr": "true() and ${missing}",
+      "context": {
+        "values": {}
+      },
+      "expect": false
+    },
+    {
+      "name": "or with null",
+      "expr": "false() or ${missing}",
+      "context": {
+        "values": {}
+      },
+      "expect": false
+    },
+    {
+      "name": "and short-circuits comparison result",
+      "expr": "${crop} = 'other' and ${other_crop} != ''",
+      "context": {
+        "values": {
+          "crop": "other",
+          "other_crop": "yam"
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "answered and not none (answered)",
+      "expr": "${id_type} != '' and ${id_type} != 'none'",
+      "context": {
+        "values": {
+          "id_type": "ghana_card"
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "answered and not none (none)",
+      "expr": "${id_type} != '' and ${id_type} != 'none'",
+      "context": {
+        "values": {
+          "id_type": "none"
+        }
+      },
+      "expect": false
+    },
+    {
+      "name": "if with else branch",
+      "expr": "if(${area} > 40000, 'yes', 'no')",
+      "context": {
+        "values": {
+          "area": 1000
+        }
+      },
+      "expect": "no"
+    },
+    {
+      "name": "if condition null takes else",
+      "expr": "if(${missing} > 1, 'a', 'b')",
+      "context": {
+        "values": {}
+      },
+      "expect": "b"
+    },
+    {
+      "name": "coalesce null",
+      "expr": "coalesce(${missing}, 'x')",
+      "context": {
+        "values": {}
+      },
+      "expect": "x"
+    },
+    {
+      "name": "coalesce empty string",
+      "expr": "coalesce('', 'x')",
+      "context": {
+        "values": {}
+      },
+      "expect": "x"
+    },
+    {
+      "name": "coalesce keeps zero",
+      "expr": "coalesce(0, 'x')",
+      "context": {
+        "values": {}
+      },
+      "expect": 0
+    },
+    {
+      "name": "string-length",
+      "expr": "string-length('Juaboso')",
+      "context": {
+        "values": {}
+      },
+      "expect": 7
+    },
+    {
+      "name": "string-length of null is 0",
+      "expr": "string-length(${missing})",
+      "context": {
+        "values": {}
+      },
+      "expect": 0
+    },
+    {
+      "name": "escaped quote in string",
+      "expr": "string-length('it\\'s')",
+      "context": {
+        "values": {}
+      },
+      "expect": 4
+    },
+    {
+      "name": "double quoted string",
+      "expr": "\"Sefwi\" = 'Sefwi'",
+      "context": {
+        "values": {}
+      },
+      "expect": true
+    },
+    {
+      "name": "concat numbers prints integers without .0",
+      "expr": "concat('A', 1.0, 2.5)",
+      "context": {
+        "values": {}
+      },
+      "expect": "A12.5"
+    },
+    {
+      "name": "regex match",
+      "expr": "regex(${code}, '^[A-Z]{2}-[0-9]{4}$')",
+      "context": {
+        "values": {
+          "code": "WN-0042"
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "regex no match",
+      "expr": "regex('wn-1', '^[A-Z]{2}-[0-9]{4}$')",
+      "context": {
+        "values": {}
+      },
+      "expect": false
+    },
+    {
+      "name": "regex on null is false",
+      "expr": "regex(${missing}, '.*')",
+      "context": {
+        "values": {}
+      },
+      "expect": false
+    },
+    {
+      "name": "int truncates toward zero",
+      "expr": "int(-2.9)",
+      "context": {
+        "values": {}
+      },
+      "expect": -2
+    },
+    {
+      "name": "int positive",
+      "expr": "int(2.9)",
+      "context": {
+        "values": {}
+      },
+      "expect": 2
+    },
+    {
+      "name": "number parses",
+      "expr": "number('3.5')",
+      "context": {
+        "values": {}
+      },
+      "expect": 3.5
+    },
+    {
+      "name": "number invalid is null",
+      "expr": "number('x')",
+      "context": {
+        "values": {}
+      },
+      "expect": null
+    },
+    {
+      "name": "round half away from zero",
+      "expr": "round(2.5, 0)",
+      "context": {
+        "values": {}
+      },
+      "expect": 3
+    },
+    {
+      "name": "round negative half away from zero",
+      "expr": "round(-2.5, 0)",
+      "context": {
+        "values": {}
+      },
+      "expect": -3
+    },
+    {
+      "name": "round to integer default",
+      "expr": "round(3.7)",
+      "context": {
+        "values": {}
+      },
+      "expect": 4
+    },
+    {
+      "name": "selected on select_one",
+      "expr": "selected(${crop}, 'cocoa')",
+      "context": {
+        "values": {
+          "crop": "cocoa"
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "selected false",
+      "expr": "selected(${crops}, 'rubber')",
+      "context": {
+        "values": {
+          "crops": [
+            "cocoa"
+          ]
+        }
+      },
+      "expect": false
+    },
+    {
+      "name": "selected on null is false",
+      "expr": "selected(${missing}, 'x')",
+      "context": {
+        "values": {}
+      },
+      "expect": false
+    },
+    {
+      "name": "count-selected of null is 0",
+      "expr": "count-selected(${missing})",
+      "context": {
+        "values": {}
+      },
+      "expect": 0
+    },
+    {
+      "name": "count-selected of select_one is 1",
+      "expr": "count-selected(${crop})",
+      "context": {
+        "values": {
+          "crop": "cocoa"
+        }
+      },
+      "expect": 1
+    },
+    {
+      "name": "count of repeat rows",
+      "expr": "count(${occupants})",
+      "context": {
+        "values": {
+          "occupants": [
+            {
+              "name": "A",
+              "age": 30
+            },
+            {
+              "name": "B",
+              "age": 41
+            }
+          ]
+        }
+      },
+      "expect": 2
+    },
+    {
+      "name": "count of null repeat is 0",
+      "expr": "count(${occupants})",
+      "context": {
+        "values": {}
+      },
+      "expect": 0
+    },
+    {
+      "name": "sum over repeat field",
+      "expr": "sum(${occupants.age})",
+      "context": {
+        "values": {
+          "occupants": [
+            {
+              "name": "A",
+              "age": 30
+            },
+            {
+              "name": "B",
+              "age": "41"
+            },
+            {
+              "name": "C"
+            }
+          ]
+        }
+      },
+      "expect": 71
+    },
+    {
+      "name": "dotted reference yields array",
+      "expr": "count-selected(${occupants.name})",
+      "context": {
+        "values": {
+          "occupants": [
+            {
+              "name": "A"
+            },
+            {
+              "name": "B"
+            }
+          ]
+        }
+      },
+      "expect": 2
+    },
+    {
+      "name": "inside repeat item sibling wins over parent",
+      "expr": "${name} = 'B'",
+      "context": {
+        "values": {
+          "name": "parent",
+          "occupants": []
+        },
+        "repeatItem": {
+          "name": "B"
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "inside repeat item falls back to parent",
+      "expr": "${community} = 'Juaboso'",
+      "context": {
+        "values": {
+          "community": "Juaboso"
+        },
+        "repeatItem": {
+          "name": "B"
+        }
+      },
+      "expect": true
+    },
+    {
+      "name": "inside repeat self in constraint",
+      "expr": "string-length(.) >= 2",
+      "context": {
+        "values": {},
+        "repeatItem": {
+          "name": "B"
+        },
+        "self": "Bo"
+      },
+      "expect": true
+    },
+    {
+      "name": "now injected",
+      "expr": "now()",
+      "context": {
+        "values": {}
+      },
+      "expect": "2026-10-22T10:00:00Z"
+    },
+    {
+      "name": "today compares as date string",
+      "expr": "today() > '2026-01-01'",
+      "context": {
+        "values": {}
+      },
+      "expect": true
+    },
+    {
+      "name": "geom_length from context",
+      "expr": "geom_length()",
+      "context": {
+        "values": {},
+        "geomLengthM": 120.5
+      },
+      "expect": 120.5
+    },
+    {
+      "name": "geom_length null without geometry",
+      "expr": "geom_length() > 0",
+      "context": {
+        "values": {},
+        "geomLengthM": null
+      },
+      "expect": null
+    },
+    {
+      "name": "lookup from host",
+      "expr": "lookup('districts', 'name')",
+      "context": {
+        "values": {},
+        "lookups": {
+          "districts.name": "Juaboso"
+        }
+      },
+      "expect": "Juaboso"
+    },
+    {
+      "name": "lookup unavailable is null",
+      "expr": "lookup('districts', 'name')",
+      "context": {
+        "values": {}
+      },
+      "expect": null
+    },
+    {
+      "name": "ghanapost_gps from host",
+      "expr": "ghanapost_gps()",
+      "context": {
+        "values": {},
+        "ghanapostGps": "WN-0123-4567"
+      },
+      "expect": "WN-0123-4567"
+    },
+    {
+      "name": "ghanapost_gps unavailable is null",
+      "expr": "ghanapost_gps()",
+      "context": {
+        "values": {}
+      },
+      "expect": null
+    },
+    {
+      "name": "farms: needs polygon for eudr",
+      "expr": "if(geom_area() > 40000, 'yes', 'no')",
+      "context": {
+        "values": {},
+        "geomAreaM2": 52000.0
+      },
+      "expect": "yes"
+    },
+    {
+      "name": "farms: area_ha",
+      "expr": "geom_area() div 10000",
+      "context": {
+        "values": {},
+        "geomAreaM2": 12345.6
+      },
+      "expect": 1.23456
+    },
+    {
+      "name": "farmers: consent constraint",
+      "expr": ". = 'yes'",
+      "context": {
+        "values": {},
+        "self": "no"
+      },
+      "expect": false
+    },
+    {
+      "name": "unknown field without fields list is null",
+      "expr": "${nope}",
+      "context": {
+        "values": {}
+      },
+      "expect": null
+    },
+    {
+      "name": "known field with fields list",
+      "expr": "${crop} = 'cocoa'",
+      "context": {
+        "values": {
+          "crop": "cocoa"
+        },
+        "fields": [
+          "crop"
+        ]
+      },
+      "expect": true
+    },
+    {
+      "name": "dotted unknown root with fields list",
+      "expr": "${nope.x}",
+      "context": {
+        "values": {},
+        "fields": [
+          "crop"
+        ]
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "dotted known root with fields list",
+      "expr": "count(${occupants.name})",
+      "context": {
+        "values": {
+          "occupants": [
+            {
+              "name": "A"
+            }
+          ]
+        },
+        "fields": [
+          "occupants"
+        ]
+      },
+      "expect": 1
+    },
+    {
+      "name": "missing operand",
+      "expr": "1 +",
+      "context": {
+        "values": {}
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "unexpected token",
+      "expr": "1 $ 2",
+      "context": {
+        "values": {}
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "empty reference",
+      "expr": "${} = 1",
+      "context": {
+        "values": {}
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "trailing tokens",
+      "expr": "1 2",
+      "context": {
+        "values": {}
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "wrong arity",
+      "expr": "if(1)",
+      "context": {
+        "values": {}
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "empty expression",
+      "expr": "",
+      "context": {
+        "values": {}
+      },
+      "expectError": "parse"
+    },
+    {
+      "name": "unclosed reference",
+      "expr": "${crop = 1",
       "context": {
         "values": {}
       },

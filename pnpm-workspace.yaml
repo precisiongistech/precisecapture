@@ -1,0 +1,8 @@
+packages:
+  - "apps/web"
+  - "packages/*"
+
+
+# Dependencies allowed to run install scripts (pnpm refuses unknown ones).
+allowBuilds:
+  esbuild: true

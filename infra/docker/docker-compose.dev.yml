@@ -1,12 +1,15 @@
 # Local development services for PreciseCapture.
 # Usage: make dev-up   (docker compose -f infra/docker/docker-compose.dev.yml --env-file .env up -d)
 # Production infrastructure lives in infra/deploy (Desmond).
+#
+# Host ports are configurable (DB_PORT, REDIS_PORT, ...) so the stack can coexist with other
+# services on a developer machine. Images are pinned for reproducible dev environments.
 
 name: precisecapture-dev
 
 services:
   db:
-    image: postgis/postgis:16-3.4
+    image: imresamu/postgis:16-3.5   # multi-arch (amd64 + arm64) build of the official postgis/postgis Dockerfiles
     restart: unless-stopped
     environment:
       POSTGRES_DB: precisecapture
@@ -17,7 +20,7 @@ services:
       PC_PLATFORM_PASSWORD: ${PC_PLATFORM_PASSWORD:-pc_platform_dev}
       PC_TILES_PASSWORD: ${PC_TILES_PASSWORD:-pc_tiles_dev}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d:ro
@@ -28,26 +31,26 @@ services:
       retries: 20
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z   # NOTE: MinIO stopped publishing public images in 2025; see docs/DECISIONS.md
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-minioadmin}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-minioadmin}
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # console
+      - "${MINIO_PORT:-9000}:9000"           # S3 API
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"   # console
     volumes:
       - miniodata:/data
 
   minio-setup:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
     depends_on:
       - minio
     entrypoint: >
@@ -62,26 +65,26 @@ services:
       S3_BUCKET: ${S3_BUCKET:-precisecapture-dev}
 
   martin:
-    image: ghcr.io/maplibre/martin:latest
+    image: ghcr.io/maplibre/martin:v0.15.0
     restart: unless-stopped
     # Martin connects as pc_tiles (SELECT/EXECUTE on tile functions only). It is NOT exposed to browsers:
     # the web app requests tiles from Django (/api/v1/projects/{id}/tiles/...), which authenticates and proxies here.
-    # See docs/BUILD_PLAN.md M5 task 7.
+    # See docs/BUILD_PLAN.md M5 task 7. Until M5 there are no tile sources, so Martin serves an empty catalog.
     command: --listen-addresses 0.0.0.0:3000
     environment:
       DATABASE_URL: postgres://pc_tiles:${PC_TILES_PASSWORD:-pc_tiles_dev}@db:5432/precisecapture
     ports:
-      - "3000:3000"
+      - "${MARTIN_PORT:-3000}:3000"
     depends_on:
       db:
         condition: service_healthy
 
   mailpit:
-    image: axllent/mailpit:latest
+    image: axllent/mailpit:v1.31
     restart: unless-stopped
     ports:
-      - "1025:1025"   # SMTP
-      - "8025:8025"   # web UI
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"   # SMTP
+      - "${MAILPIT_UI_PORT:-8025}:8025"     # web UI
 
 volumes:
   pgdata:

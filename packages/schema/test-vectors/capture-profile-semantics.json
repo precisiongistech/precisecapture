@@ -1,0 +1,380 @@
+{
+  "description": "Shared test vectors for validateCaptureProfileSemantics(profile, {geometryType?, layerKeys?}): the cross-field rules a JSON Schema cannot express. Each expected error is {field, code}; order does not matter. geometryType and layerKeys are optional context: rules needing them are skipped when absent.",
+  "cases": [
+    {
+      "name": "valid pilot profile",
+      "profile": {
+        "schemaVersion": 1,
+        "geometryType": "polygon",
+        "modes": {
+          "allowed": [
+            "stream",
+            "gps_vertex",
+            "tap"
+          ],
+          "default": "stream",
+          "locked": false
+        },
+        "autoClose": {
+          "enabled": true,
+          "locked": true
+        },
+        "minVertices": 3,
+        "snapping": {
+          "enabled": true,
+          "toleranceMeters": 2,
+          "targets": [
+            "vertex",
+            "edge"
+          ],
+          "layers": [
+            "self"
+          ],
+          "locked": false
+        },
+        "stream": {
+          "intervalMeters": 3,
+          "allowedIntervalsMeters": [
+            1,
+            2,
+            3,
+            5,
+            10
+          ],
+          "intervalSeconds": null,
+          "pauseWhenStationary": true,
+          "skipVertexIfAccuracyWorseThanMeters": 5,
+          "simplifyOnClose": {
+            "enabled": true,
+            "toleranceMeters": "auto"
+          },
+          "keepRawTrack": true,
+          "locked": false
+        },
+        "gps": {
+          "maxAccuracyMeters": 5,
+          "onPoorAccuracy": "warn",
+          "averaging": {
+            "enabled": true,
+            "samples": 10,
+            "locked": false
+          },
+          "allowExternalReceiver": true,
+          "rejectMockLocation": true
+        },
+        "offsetPoints": {
+          "enabled": false
+        },
+        "validation": {
+          "preventSelfIntersection": true,
+          "topology": {
+            "noOverlapWith": [
+              "self"
+            ],
+            "onOverlap": "flag",
+            "overlapToleranceSqm": 1
+          },
+          "minAreaSqm": 100,
+          "maxAreaSqm": 2000000,
+          "duplicateWarningMeters": 10
+        },
+        "centroid": {
+          "method": "centroid",
+          "fallback": "point_on_surface",
+          "allowPointOnlyCapture": false
+        },
+        "display": {
+          "showArea": true,
+          "showLength": true,
+          "units": "hectares"
+        }
+      },
+      "expectErrors": [],
+      "geometryType": "polygon",
+      "layerKeys": [
+        "lyr_farmers",
+        "lyr_farms"
+      ]
+    },
+    {
+      "name": "empty profile is valid",
+      "profile": {},
+      "expectErrors": []
+    },
+    {
+      "name": "default mode must be allowed",
+      "profile": {
+        "modes": {
+          "allowed": [
+            "tap"
+          ],
+          "default": "stream"
+        }
+      },
+      "expectErrors": [
+        {
+          "field": "modes.default",
+          "code": "not_allowed"
+        }
+      ]
+    },
+    {
+      "name": "default mode without allowed list is fine",
+      "profile": {
+        "modes": {
+          "default": "stream"
+        }
+      },
+      "expectErrors": []
+    },
+    {
+      "name": "only one stream driver",
+      "profile": {
+        "stream": {
+          "intervalMeters": 3,
+          "intervalSeconds": 5
+        }
+      },
+      "expectErrors": [
+        {
+          "field": "stream.intervalSeconds",
+          "code": "exclusive"
+        }
+      ]
+    },
+    {
+      "name": "null driver does not count",
+      "profile": {
+        "stream": {
+          "intervalMeters": 3,
+          "intervalSeconds": null
+        }
+      },
+      "expectErrors": []
+    },
+    {
+      "name": "interval must be in allowed intervals",
+      "profile": {
+        "stream": {
+          "intervalMeters": 4,
+          "allowedIntervalsMeters": [
+            1,
+            2,
+            3,
+            5
+          ]
+        }
+      },
+      "expectErrors": [
+        {
+          "field": "stream.intervalMeters",
+          "code": "not_allowed"
+        }
+      ]
+    },
+    {
+      "name": "interval without allowed list is fine",
+      "profile": {
+        "stream": {
+          "intervalMeters": 4
+        }
+      },
+      "expectErrors": []
+    },
+    {
+      "name": "stream snapping trace autoClose need a line or polygon layer",
+      "profile": {
+        "stream": {
+          "intervalMeters": 3
+        },
+        "snapping": {
+          "enabled": true
+        },
+        "trace": {
+          "enabled": false
+        },
+        "autoClose": {
+          "enabled": true
+        }
+      },
+      "expectErrors": [
+        {
+          "field": "stream",
+          "code": "geometry"
+        },
+        {
+          "field": "snapping",
+          "code": "geometry"
+        },
+        {
+          "field": "trace",
+          "code": "geometry"
+        },
+        {
+          "field": "autoClose",
+          "code": "geometry"
+        }
+      ],
+      "geometryType": "point"
+    },
+    {
+      "name": "same on a no-geometry layer",
+      "profile": {
+        "stream": {
+          "intervalMeters": 3
+        }
+      },
+      "expectErrors": [
+        {
+          "field": "stream",
+          "code": "geometry"
+        }
+      ],
+      "geometryType": "none"
+    },
+    {
+      "name": "geometry rule uses the profile's own geometryType when no context",
+      "profile": {
+        "geometryType": "point",
+        "snapping": {
+          "enabled": true
+        }
+      },
+      "expectErrors": [
+        {
+          "field": "snapping",
+          "code": "geometry"
+        }
+      ]
+    },
+    {
+      "name": "geometry rule skipped when type unknown",
+      "profile": {
+        "stream": {
+          "intervalMeters": 3
+        }
+      },
+      "expectErrors": []
+    },
+    {
+      "name": "line layers may stream and snap",
+      "profile": {
+        "stream": {
+          "intervalMeters": 3
+        },
+        "snapping": {
+          "enabled": true
+        }
+      },
+      "expectErrors": [],
+      "geometryType": "line"
+    },
+    {
+      "name": "layer refs must exist in the project",
+      "profile": {
+        "snapping": {
+          "layers": [
+            "self",
+            "lyr_roads"
+          ]
+        },
+        "trace": {
+          "layers": [
+            "lyr_rivers"
+          ]
+        },
+        "validation": {
+          "topology": {
+            "noOverlapWith": [
+              "self",
+              "lyr_farms"
+            ],
+            "noGapsWith": [
+              "lyr_nope"
+            ]
+          }
+        }
+      },
+      "expectErrors": [
+        {
+          "field": "snapping.layers.1",
+          "code": "unknown_layer"
+        },
+        {
+          "field": "trace.layers.0",
+          "code": "unknown_layer"
+        },
+        {
+          "field": "validation.topology.noGapsWith.0",
+          "code": "unknown_layer"
+        }
+      ],
+      "geometryType": "polygon",
+      "layerKeys": [
+        "lyr_farms",
+        "lyr_farmers"
+      ]
+    },
+    {
+      "name": "layer refs skipped without layerKeys",
+      "profile": {
+        "snapping": {
+          "layers": [
+            "lyr_roads"
+          ]
+        }
+      },
+      "expectErrors": [],
+      "geometryType": "polygon"
+    },
+    {
+      "name": "min area cannot exceed max area",
+      "profile": {
+        "validation": {
+          "minAreaSqm": 500,
+          "maxAreaSqm": 100
+        }
+      },
+      "expectErrors": [
+        {
+          "field": "validation.maxAreaSqm",
+          "code": "range"
+        }
+      ]
+    },
+    {
+      "name": "several problems at once",
+      "profile": {
+        "modes": {
+          "allowed": [
+            "tap"
+          ],
+          "default": "stream"
+        },
+        "stream": {
+          "intervalMeters": 7,
+          "intervalSeconds": 2,
+          "allowedIntervalsMeters": [
+            1,
+            3
+          ]
+        }
+      },
+      "expectErrors": [
+        {
+          "field": "modes.default",
+          "code": "not_allowed"
+        },
+        {
+          "field": "stream.intervalSeconds",
+          "code": "exclusive"
+        },
+        {
+          "field": "stream.intervalMeters",
+          "code": "not_allowed"
+        }
+      ],
+      "geometryType": "polygon"
+    }
+  ]
+}

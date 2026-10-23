@@ -235,7 +235,7 @@ Work through the milestones in order. Each one should be a branch and a pull req
    - up to 200 changes; gzip accepted
    - one transaction per project, with a `FOR UPDATE` lock on `ProjectSyncState`
    - per-change results as in `ENGINEERING_NOTES.md §2`
-3. `GET /sync/pull?project=&since=&limit=`: latest state per changed entity, `next_cursor`, `has_more`, `config_version`. Pull includes review status changes and send-back notes.
+3. `GET /sync/pull?project=&cursor=&limit=`: latest state per changed entity, `next_cursor`, `has_more`, `config_version`. Pull includes review status changes and send-back notes.
 4. Conflict handling, field-level merge using `FeatureHistory`, and the conflict endpoints: `GET /conflicts` and `POST /conflicts/{id}/resolve` (keep server, keep device, or merged payload).
 5. Update the device's `last_sync_at`, and record sync metrics (changes, durations, errors) for support.
 6. Replace the M4 stubs and regenerate the contract.

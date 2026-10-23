@@ -1,0 +1,84 @@
+[project]
+name = "precisecapture-api"
+version = "0.1.0"
+description = "PreciseCapture API: Django + GeoDjango + Django Ninja"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "django>=5.2,<5.3",
+    "django-ninja>=1.7,<2",
+    "psycopg[binary,pool]>=3.2,<4",
+    "celery[redis]>=5.5,<6",
+    "redis>=5.2,<7",
+    "django-environ>=0.12,<1",
+    "django-storages[s3]>=1.14,<2",
+    "pyjwt>=2.10,<3",
+    "uuid-utils>=0.10,<2",
+    "jsonschema>=4.23,<5",
+    "argon2-cffi>=23.1",
+    "gunicorn>=23",
+    "uvicorn>=0.34",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14",
+    "mypy>=1.17",
+    "django-stubs[compatible-mypy]>=5.2,<5.3",
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "factory-boy>=3.3",
+    "pre-commit>=4",
+    "celery-types>=0.23",
+    "types-jsonschema>=4.23",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["**/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "DJ", "RUF", "T20", "ANN"]
+ignore = ["ANN401", "RUF012"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN"]
+"config/settings/*" = ["F403", "F405"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["config", "precisecapture"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main"]
+strict = true
+warn_unreachable = true
+exclude = ["migrations/"]
+
+[[tool.mypy.overrides]]
+module = ["environ.*", "factory.*", "uuid_utils.*"]
+ignore_missing_imports = true
+
+# Tests: fixtures make full annotation noisy; keep type checking on but allow untyped defs.
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "perf: performance tests with seeded data (run manually)",
+    "integration: needs the docker dev services (Redis)",
+]
+filterwarnings = ["error::DeprecationWarning:precisecapture.*"]
