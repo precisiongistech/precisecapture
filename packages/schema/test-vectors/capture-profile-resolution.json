@@ -1,0 +1,681 @@
+{
+  "description": "Shared test vectors for resolveCaptureProfile(org, project, layer, collectorOverrides). Levels merge org -> project -> layer -> collector. A `locked: true` on a lockable object freezes that object (and everything inside it) for every lower level, including the collector. Collectors may only change keys inside lockable objects; top-level scalars and the validation/centroid/display objects are admin-only. Null inputs are treated as empty. See capture-profile-resolution.md.",
+  "cases": [
+    {
+      "name": "all levels empty gives an empty profile",
+      "org": null,
+      "project": null,
+      "layer": null,
+      "collector": null,
+      "expect": {}
+    },
+    {
+      "name": "org defaults flow through",
+      "org": {
+        "gps": {
+          "maxAccuracyMeters": 5,
+          "onPoorAccuracy": "warn"
+        }
+      },
+      "project": null,
+      "layer": null,
+      "collector": null,
+      "expect": {
+        "gps": {
+          "maxAccuracyMeters": 5,
+          "onPoorAccuracy": "warn"
+        }
+      }
+    },
+    {
+      "name": "project overrides org, layer overrides project",
+      "org": {
+        "stream": {
+          "intervalMeters": 3,
+          "pauseWhenStationary": true
+        }
+      },
+      "project": {
+        "stream": {
+          "intervalMeters": 2
+        }
+      },
+      "layer": {
+        "stream": {
+          "intervalMeters": 1
+        }
+      },
+      "collector": null,
+      "expect": {
+        "stream": {
+          "intervalMeters": 1,
+          "pauseWhenStationary": true
+        }
+      }
+    },
+    {
+      "name": "objects deep-merge, arrays replace",
+      "org": {
+        "snapping": {
+          "enabled": true,
+          "toleranceMeters": 2,
+          "layers": [
+            "self"
+          ]
+        }
+      },
+      "project": null,
+      "layer": {
+        "snapping": {
+          "layers": [
+            "self",
+            "lyr_roads"
+          ]
+        }
+      },
+      "collector": null,
+      "expect": {
+        "snapping": {
+          "enabled": true,
+          "toleranceMeters": 2,
+          "layers": [
+            "self",
+            "lyr_roads"
+          ]
+        }
+      }
+    },
+    {
+      "name": "collector override inside an unlocked object",
+      "org": null,
+      "project": null,
+      "layer": {
+        "stream": {
+          "intervalMeters": 3,
+          "allowedIntervalsMeters": [
+            1,
+            2,
+            3,
+            5,
+            10
+          ],
+          "locked": false
+        }
+      },
+      "collector": {
+        "stream": {
+          "intervalMeters": 1
+        }
+      },
+      "expect": {
+        "stream": {
+          "intervalMeters": 1,
+          "allowedIntervalsMeters": [
+            1,
+            2,
+            3,
+            5,
+            10
+          ],
+          "locked": false
+        }
+      }
+    },
+    {
+      "name": "collector cannot change a locked object",
+      "org": null,
+      "project": null,
+      "layer": {
+        "autoClose": {
+          "enabled": true,
+          "locked": true
+        }
+      },
+      "collector": {
+        "autoClose": {
+          "enabled": false
+        }
+      },
+      "expect": {
+        "autoClose": {
+          "enabled": true,
+          "locked": true
+        }
+      }
+    },
+    {
+      "name": "collector cannot unlock",
+      "org": null,
+      "project": null,
+      "layer": {
+        "autoClose": {
+          "enabled": true,
+          "locked": true
+        }
+      },
+      "collector": {
+        "autoClose": {
+          "enabled": false,
+          "locked": false
+        }
+      },
+      "expect": {
+        "autoClose": {
+          "enabled": true,
+          "locked": true
+        }
+      }
+    },
+    {
+      "name": "collector cannot set admin-only scalars",
+      "org": null,
+      "project": null,
+      "layer": {
+        "minVertices": 3,
+        "validation": {
+          "preventSelfIntersection": true
+        },
+        "centroid": {
+          "method": "centroid"
+        },
+        "display": {
+          "units": "hectares"
+        },
+        "geometryType": "polygon"
+      },
+      "collector": {
+        "minVertices": 1,
+        "validation": {
+          "preventSelfIntersection": false
+        },
+        "centroid": {
+          "method": "point_on_surface"
+        },
+        "display": {
+          "units": "acres"
+        },
+        "geometryType": "point"
+      },
+      "expect": {
+        "minVertices": 3,
+        "validation": {
+          "preventSelfIntersection": true
+        },
+        "centroid": {
+          "method": "centroid"
+        },
+        "display": {
+          "units": "hectares"
+        },
+        "geometryType": "polygon"
+      }
+    },
+    {
+      "name": "org lock freezes the object for project and layer",
+      "org": {
+        "gps": {
+          "maxAccuracyMeters": 5,
+          "averaging": {
+            "enabled": true,
+            "samples": 10,
+            "locked": true
+          }
+        }
+      },
+      "project": {
+        "gps": {
+          "averaging": {
+            "enabled": false
+          }
+        }
+      },
+      "layer": {
+        "gps": {
+          "averaging": {
+            "samples": 3
+          }
+        }
+      },
+      "collector": null,
+      "expect": {
+        "gps": {
+          "maxAccuracyMeters": 5,
+          "averaging": {
+            "enabled": true,
+            "samples": 10,
+            "locked": true
+          }
+        }
+      }
+    },
+    {
+      "name": "org lock on a nested object does not freeze its parent",
+      "org": {
+        "gps": {
+          "maxAccuracyMeters": 5,
+          "averaging": {
+            "enabled": true,
+            "locked": true
+          }
+        }
+      },
+      "project": null,
+      "layer": {
+        "gps": {
+          "maxAccuracyMeters": 8,
+          "onPoorAccuracy": "block",
+          "averaging": {
+            "enabled": false
+          }
+        }
+      },
+      "collector": null,
+      "expect": {
+        "gps": {
+          "maxAccuracyMeters": 8,
+          "onPoorAccuracy": "block",
+          "averaging": {
+            "enabled": true,
+            "locked": true
+          }
+        }
+      }
+    },
+    {
+      "name": "parent lock freezes nested objects too",
+      "org": {
+        "gps": {
+          "maxAccuracyMeters": 5,
+          "locked": true,
+          "averaging": {
+            "enabled": true,
+            "samples": 10
+          }
+        }
+      },
+      "project": null,
+      "layer": {
+        "gps": {
+          "averaging": {
+            "samples": 2
+          }
+        }
+      },
+      "collector": {
+        "gps": {
+          "maxAccuracyMeters": 20
+        }
+      },
+      "expect": {
+        "gps": {
+          "maxAccuracyMeters": 5,
+          "locked": true,
+          "averaging": {
+            "enabled": true,
+            "samples": 10
+          }
+        }
+      }
+    },
+    {
+      "name": "project lock freezes layer and collector but not org",
+      "org": {
+        "snapping": {
+          "enabled": true,
+          "toleranceMeters": 2
+        }
+      },
+      "project": {
+        "snapping": {
+          "enabled": false,
+          "locked": true
+        }
+      },
+      "layer": {
+        "snapping": {
+          "enabled": true
+        }
+      },
+      "collector": {
+        "snapping": {
+          "enabled": true
+        }
+      },
+      "expect": {
+        "snapping": {
+          "enabled": false,
+          "locked": true
+        }
+      },
+      "note": "A lock replaces the object as a whole: keys set above the locking level are dropped if the locking level does not repeat them."
+    },
+    {
+      "name": "layer lock stops the collector only",
+      "org": {
+        "modes": {
+          "allowed": [
+            "tap"
+          ],
+          "default": "tap"
+        }
+      },
+      "project": null,
+      "layer": {
+        "modes": {
+          "allowed": [
+            "stream",
+            "tap"
+          ],
+          "default": "stream",
+          "locked": true
+        }
+      },
+      "collector": {
+        "modes": {
+          "default": "tap"
+        }
+      },
+      "expect": {
+        "modes": {
+          "allowed": [
+            "stream",
+            "tap"
+          ],
+          "default": "stream",
+          "locked": true
+        }
+      }
+    },
+    {
+      "name": "locked false at a lower level does not unlock",
+      "org": {
+        "stream": {
+          "intervalMeters": 3,
+          "locked": true
+        }
+      },
+      "project": null,
+      "layer": {
+        "stream": {
+          "intervalMeters": 1,
+          "locked": false
+        }
+      },
+      "collector": null,
+      "expect": {
+        "stream": {
+          "intervalMeters": 3,
+          "locked": true
+        }
+      }
+    },
+    {
+      "name": "collector key outside lockable objects is ignored even if unknown",
+      "org": null,
+      "project": null,
+      "layer": {
+        "stream": {
+          "intervalMeters": 3
+        }
+      },
+      "collector": {
+        "somethingElse": true,
+        "stream": {
+          "intervalMeters": 3
+        }
+      },
+      "expect": {
+        "stream": {
+          "intervalMeters": 3
+        }
+      }
+    },
+    {
+      "name": "collector may change several unlocked objects at once",
+      "org": null,
+      "project": null,
+      "layer": {
+        "stream": {
+          "intervalMeters": 3,
+          "locked": false
+        },
+        "gps": {
+          "averaging": {
+            "enabled": true,
+            "samples": 10,
+            "locked": false
+          }
+        },
+        "offsetPoints": {
+          "enabled": false
+        }
+      },
+      "collector": {
+        "stream": {
+          "intervalMeters": 2
+        },
+        "gps": {
+          "averaging": {
+            "enabled": false
+          }
+        },
+        "offsetPoints": {
+          "enabled": true
+        }
+      },
+      "expect": {
+        "stream": {
+          "intervalMeters": 2,
+          "locked": false
+        },
+        "gps": {
+          "averaging": {
+            "enabled": false,
+            "samples": 10,
+            "locked": false
+          }
+        },
+        "offsetPoints": {
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "null levels are empty",
+      "org": null,
+      "project": null,
+      "layer": {
+        "minVertices": 3
+      },
+      "collector": null,
+      "expect": {
+        "minVertices": 3
+      }
+    },
+    {
+      "name": "pilot farm profile with collector choosing 1 m",
+      "org": null,
+      "project": null,
+      "layer": {
+        "schemaVersion": 1,
+        "geometryType": "polygon",
+        "modes": {
+          "allowed": [
+            "stream",
+            "gps_vertex",
+            "tap"
+          ],
+          "default": "stream",
+          "locked": false
+        },
+        "autoClose": {
+          "enabled": true,
+          "locked": true
+        },
+        "minVertices": 3,
+        "snapping": {
+          "enabled": true,
+          "toleranceMeters": 2,
+          "targets": [
+            "vertex",
+            "edge"
+          ],
+          "layers": [
+            "self"
+          ],
+          "locked": false
+        },
+        "stream": {
+          "intervalMeters": 3,
+          "allowedIntervalsMeters": [
+            1,
+            2,
+            3,
+            5,
+            10
+          ],
+          "intervalSeconds": null,
+          "pauseWhenStationary": true,
+          "skipVertexIfAccuracyWorseThanMeters": 5,
+          "simplifyOnClose": {
+            "enabled": true,
+            "toleranceMeters": "auto"
+          },
+          "keepRawTrack": true,
+          "locked": false
+        },
+        "gps": {
+          "maxAccuracyMeters": 5,
+          "onPoorAccuracy": "warn",
+          "averaging": {
+            "enabled": true,
+            "samples": 10,
+            "locked": false
+          },
+          "allowExternalReceiver": true,
+          "rejectMockLocation": true
+        },
+        "offsetPoints": {
+          "enabled": false
+        },
+        "validation": {
+          "preventSelfIntersection": true,
+          "topology": {
+            "noOverlapWith": [
+              "self"
+            ],
+            "onOverlap": "flag",
+            "overlapToleranceSqm": 1
+          },
+          "minAreaSqm": 100,
+          "maxAreaSqm": 2000000,
+          "duplicateWarningMeters": 10
+        },
+        "centroid": {
+          "method": "centroid",
+          "fallback": "point_on_surface",
+          "allowPointOnlyCapture": false
+        },
+        "display": {
+          "showArea": true,
+          "showLength": true,
+          "units": "hectares"
+        }
+      },
+      "collector": {
+        "stream": {
+          "intervalMeters": 1
+        },
+        "autoClose": {
+          "enabled": false
+        }
+      },
+      "expect": {
+        "schemaVersion": 1,
+        "geometryType": "polygon",
+        "modes": {
+          "allowed": [
+            "stream",
+            "gps_vertex",
+            "tap"
+          ],
+          "default": "stream",
+          "locked": false
+        },
+        "autoClose": {
+          "enabled": true,
+          "locked": true
+        },
+        "minVertices": 3,
+        "snapping": {
+          "enabled": true,
+          "toleranceMeters": 2,
+          "targets": [
+            "vertex",
+            "edge"
+          ],
+          "layers": [
+            "self"
+          ],
+          "locked": false
+        },
+        "stream": {
+          "intervalMeters": 1,
+          "allowedIntervalsMeters": [
+            1,
+            2,
+            3,
+            5,
+            10
+          ],
+          "intervalSeconds": null,
+          "pauseWhenStationary": true,
+          "skipVertexIfAccuracyWorseThanMeters": 5,
+          "simplifyOnClose": {
+            "enabled": true,
+            "toleranceMeters": "auto"
+          },
+          "keepRawTrack": true,
+          "locked": false
+        },
+        "gps": {
+          "maxAccuracyMeters": 5,
+          "onPoorAccuracy": "warn",
+          "averaging": {
+            "enabled": true,
+            "samples": 10,
+            "locked": false
+          },
+          "allowExternalReceiver": true,
+          "rejectMockLocation": true
+        },
+        "offsetPoints": {
+          "enabled": false
+        },
+        "validation": {
+          "preventSelfIntersection": true,
+          "topology": {
+            "noOverlapWith": [
+              "self"
+            ],
+            "onOverlap": "flag",
+            "overlapToleranceSqm": 1
+          },
+          "minAreaSqm": 100,
+          "maxAreaSqm": 2000000,
+          "duplicateWarningMeters": 10
+        },
+        "centroid": {
+          "method": "centroid",
+          "fallback": "point_on_surface",
+          "allowPointOnlyCapture": false
+        },
+        "display": {
+          "showArea": true,
+          "showLength": true,
+          "units": "hectares"
+        }
+      }
+    }
+  ]
+}
