@@ -75,6 +75,12 @@ class Conflict(ProblemException):
     title = "Conflict"
 
 
+class NotImplementedYet(ProblemException):
+    status = 501
+    slug = "not-implemented"
+    title = "Not implemented"
+
+
 class UnprocessableEntity(ProblemException):
     status = 422
     slug = "validation-failed"
