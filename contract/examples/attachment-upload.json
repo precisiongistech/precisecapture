@@ -1,0 +1,12 @@
+{
+  "id": "0192f0c1-1234-7abc-8def-0000000000cc",
+  "upload_id": "2~abc123",
+  "part_size": 8388608,
+  "parts": [
+    {
+      "part_number": 1,
+      "url": "https://spaces.example/bucket/key?partNumber=1&uploadId=2~abc123&X-Amz-Signature=sig"
+    }
+  ],
+  "expires_at": "2026-10-22T11:15:02Z"
+}

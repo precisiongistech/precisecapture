@@ -1,0 +1,14 @@
+{
+  "results": [
+    {
+      "change_id": "0192f0c1-1234-7abc-8def-000000000002",
+      "status": "accepted",
+      "feature": {
+        "id": "0192f0c1-1234-7abc-8def-000000000001",
+        "version": 1
+      }
+    }
+  ],
+  "last_seq": 42,
+  "config_version": 8
+}

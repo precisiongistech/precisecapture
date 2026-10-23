@@ -1,0 +1,65 @@
+{
+  "items": [
+    {
+      "seq": 42,
+      "entity": "feature",
+      "id": "0192f0c1-1234-7abc-8def-000000000001",
+      "layer_id": "01a16990-2a01-7e0e-9b1a-7d2c3f4e5a6b",
+      "version": 1,
+      "deleted": false,
+      "schema_version": 1,
+      "geom": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2.5,
+              6.2
+            ],
+            [
+              -2.499,
+              6.2
+            ],
+            [
+              -2.499,
+              6.201
+            ],
+            [
+              -2.5,
+              6.201
+            ],
+            [
+              -2.5,
+              6.2
+            ]
+          ]
+        ]
+      },
+      "attributes": {
+        "farmer": "0192f0c1-1234-7abc-8def-0000000000aa",
+        "crop": "cocoa",
+        "planting_year": 2018
+      },
+      "status": "submitted",
+      "review_note": null,
+      "computed": {
+        "area_m2": 12345.6,
+        "length_m": 445.2,
+        "centroid": {
+          "type": "Point",
+          "coordinates": [
+            -2.4995,
+            6.2005
+          ]
+        },
+        "centroid_method": "centroid"
+      },
+      "qa_flags": [],
+      "updated_at": "2026-10-22T10:16:00Z",
+      "updated_by": "01a1696a-d6f1-7794-8afd-42b78a877796"
+    }
+  ],
+  "next_cursor": 42,
+  "has_more": false,
+  "config_version": 8
+}
