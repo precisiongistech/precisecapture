@@ -5,6 +5,7 @@ from ninja import NinjaAPI
 from precisecapture.accounts.api import auth_router, devices_router, me_router
 from precisecapture.common.api import router as common_router
 from precisecapture.common.errors import register_exception_handlers
+from precisecapture.orgs.api import invitations_router, orgs_router
 
 api = NinjaAPI(
     title="PreciseCapture API",
@@ -21,3 +22,5 @@ api.add_router("", common_router)
 api.add_router("/auth", auth_router)
 api.add_router("/me", me_router)
 api.add_router("/devices", devices_router)
+api.add_router("/orgs", orgs_router)
+api.add_router("/invitations", invitations_router)

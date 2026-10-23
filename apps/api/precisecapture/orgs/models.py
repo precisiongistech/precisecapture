@@ -7,6 +7,7 @@ from typing import Any, ClassVar
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 
 from precisecapture.common.ids import uuid7
@@ -100,4 +101,51 @@ class Membership(UUIDv7Model):
         self.save(update_fields=["version", "updated_at"])
 
 
-__all__ = ["ROLE_RANK", "Membership", "Organisation", "Role", "role_at_least", "uuid7"]
+class Invitation(UUIDv7Model):
+    """
+    An invitation to join an organisation, sent by email or SMS with a one-time token.
+    Global table (resolved by token before a tenant is known), see ENGINEERING_NOTES.md §1.
+    """
+
+    org = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name="invitations")
+    # NULL (not "") so "no email" and "no phone" are unambiguous, as on accounts.User.
+    email = models.EmailField(null=True, blank=True)  # noqa: DJ001
+    phone = models.CharField(max_length=16, null=True, blank=True)  # noqa: DJ001
+    role = models.CharField(max_length=16, choices=Role.choices, default=Role.COLLECTOR)
+    token_hash = models.CharField(max_length=64, unique=True)
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="+"
+    )
+    expires_at = models.DateTimeField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    accepted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta(UUIDv7Model.Meta):
+        db_table = "orgs_invitation"
+        indexes = [models.Index(fields=["org", "accepted_at"])]
+
+    @property
+    def destination(self) -> str:
+        return self.email or self.phone or ""
+
+    @property
+    def is_open(self) -> bool:
+        return (
+            self.accepted_at is None
+            and self.revoked_at is None
+            and self.expires_at > timezone.now()
+        )
+
+
+__all__ = [
+    "ROLE_RANK",
+    "Invitation",
+    "Membership",
+    "Organisation",
+    "Role",
+    "role_at_least",
+    "uuid7",
+]
