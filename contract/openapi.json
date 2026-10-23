@@ -5284,6 +5284,1228 @@
         ]
       }
     },
+    "/api/v1/layers/{layer_id}/features": {
+      "get": {
+        "operationId": "listFeatures",
+        "summary": "List Features",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "bbox",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "minLon,minLat,maxLon,maxLat (EPSG:4326)",
+              "title": "Bbox"
+            },
+            "required": false,
+            "description": "minLon,minLat,maxLon,maxLat (EPSG:4326)"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated statuses",
+              "title": "Status"
+            },
+            "required": false,
+            "description": "Comma-separated statuses"
+          },
+          {
+            "in": "query",
+            "name": "updated_since",
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Updated Since"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "include_deleted",
+            "schema": {
+              "default": false,
+              "title": "Include Deleted",
+              "type": "boolean"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "qa_flag",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only features carrying this QA flag",
+              "title": "Qa Flag"
+            },
+            "required": false,
+            "description": "Only features carrying this QA flag"
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "GeoJSON FeatureCollection of the layer's features. Filters: bbox, status, updated_since,\ninclude_deleted, qa_flag, attr.<key>=value. Cursor pagination: `next_cursor` and `has_more`\nare top-level members; UUIDv7 ids give creation order.",
+        "tags": [
+          "features"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createFeature",
+        "summary": "Create Feature",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Create a feature from the web (collectors and managers); same write path as sync.",
+        "tags": [
+          "features"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeatureCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/features/{feature_id}": {
+      "get": {
+        "operationId": "getFeature",
+        "summary": "Get Feature",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "feature_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Feature Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureDetailOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Feature with raw track, vertex metadata and relations (audit view).",
+        "tags": [
+          "features"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateFeature",
+        "summary": "Update Feature",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "feature_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Feature Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Web edit. Send `base_version` (or `If-Match: \"<version>\"`); a stale version gives 409.\nOmitted keys keep their values; `attributes` replaces the whole attribute set.",
+        "tags": [
+          "features"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeaturePatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteFeature",
+        "summary": "Delete Feature",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "feature_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Feature Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Soft delete (so it syncs). Restore with POST /features/{id}/restore.",
+        "tags": [
+          "features"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/features/{feature_id}/history": {
+      "get": {
+        "operationId": "getFeatureHistory",
+        "summary": "Get History",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "feature_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Feature Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HistoryOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "features"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/features/{feature_id}/restore": {
+      "post": {
+        "operationId": "restoreFeature",
+        "summary": "Restore Feature",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "feature_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Feature Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "features"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/features/{feature_id}/review": {
+      "post": {
+        "operationId": "reviewFeature",
+        "summary": "Review Feature",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "feature_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Feature Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Approve, reject, or send back with a note (the collector sees it on the next pull).",
+        "tags": [
+          "features"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/tiles/{layer_id}/{z}/{x}/{y}.mvt": {
+      "get": {
+        "operationId": "getLayerTile",
+        "summary": "Get Tile",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "layer_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Layer Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "z",
+            "schema": {
+              "title": "Z",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "x",
+            "schema": {
+              "title": "X",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "y",
+            "schema": {
+              "title": "Y",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Mapbox vector tile for one layer, proxied from internal Martin after membership checks.",
+        "tags": [
+          "tiles"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/layer-templates": {
       "get": {
         "operationId": "listLayerTemplates",
@@ -8375,6 +9597,953 @@
         "example": {
           "name": "string",
           "description": ""
+        }
+      },
+      "FeatureListParams": {
+        "properties": {
+          "bbox": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "minLon,minLat,maxLon,maxLat (EPSG:4326)",
+            "title": "Bbox"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Comma-separated statuses",
+            "title": "Status"
+          },
+          "updated_since": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated Since"
+          },
+          "include_deleted": {
+            "default": false,
+            "title": "Include Deleted",
+            "type": "boolean"
+          },
+          "qa_flag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only features carrying this QA flag",
+            "title": "Qa Flag"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cursor"
+          },
+          "limit": {
+            "default": 100,
+            "maximum": 500,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "FeatureListParams",
+        "type": "object",
+        "example": {
+          "bbox": "string",
+          "status": "string",
+          "updated_since": "2026-10-22T10:15:02Z",
+          "include_deleted": false,
+          "qa_flag": "string",
+          "cursor": "string",
+          "limit": 100
+        }
+      },
+      "ComputedOut": {
+        "properties": {
+          "area_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area M2"
+          },
+          "area_ha": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Ha"
+          },
+          "area_acres": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Acres"
+          },
+          "perimeter_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perimeter M"
+          },
+          "length_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Length M"
+          },
+          "centroid": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Centroid"
+          },
+          "centroid_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Centroid Method"
+          }
+        },
+        "required": [
+          "area_m2",
+          "area_ha",
+          "area_acres",
+          "perimeter_m",
+          "length_m",
+          "centroid",
+          "centroid_method"
+        ],
+        "title": "ComputedOut",
+        "type": "object",
+        "example": {
+          "area_m2": 1.5,
+          "area_ha": 1.5,
+          "area_acres": 1.5,
+          "perimeter_m": 1.5,
+          "length_m": 1.5,
+          "centroid": {},
+          "centroid_method": "string"
+        }
+      },
+      "FeatureOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "layer_id": {
+            "format": "uuid",
+            "title": "Layer Id",
+            "type": "string"
+          },
+          "layer_key": {
+            "title": "Layer Key",
+            "type": "string"
+          },
+          "geometry_type": {
+            "title": "Geometry Type",
+            "type": "string"
+          },
+          "geom": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geom"
+          },
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "review_note": {
+            "title": "Review Note",
+            "type": "string"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "computed": {
+            "$ref": "#/components/schemas/ComputedOut"
+          },
+          "qa_flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Qa Flags",
+            "type": "array"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          },
+          "created_device": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created Device"
+          },
+          "updated_device": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated Device"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "layer_id",
+          "layer_key",
+          "geometry_type",
+          "geom",
+          "attributes",
+          "schema_version",
+          "version",
+          "status",
+          "review_note",
+          "reviewed_at",
+          "deleted",
+          "computed",
+          "qa_flags",
+          "created_by",
+          "updated_by",
+          "created_device",
+          "updated_device",
+          "captured_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "FeatureOut",
+        "type": "object",
+        "example": {
+          "id": "0192f0c1-1234-7abc-8def-000000000001",
+          "project_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "layer_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "layer_key": "string",
+          "geometry_type": "string",
+          "geom": {},
+          "attributes": {},
+          "schema_version": 1,
+          "version": 1,
+          "status": "string",
+          "review_note": "string",
+          "reviewed_at": "2026-10-22T10:15:02Z",
+          "deleted": true,
+          "computed": {
+            "area_m2": 1.5,
+            "area_ha": 1.5,
+            "area_acres": 1.5,
+            "perimeter_m": 1.5,
+            "length_m": 1.5,
+            "centroid": {},
+            "centroid_method": "string"
+          },
+          "qa_flags": [
+            "string"
+          ],
+          "created_by": "0192f0c1-1234-7abc-8def-000000000001",
+          "updated_by": "0192f0c1-1234-7abc-8def-000000000001",
+          "created_device": "0192f0c1-1234-7abc-8def-000000000001",
+          "updated_device": "0192f0c1-1234-7abc-8def-000000000001",
+          "captured_at": "2026-10-22T10:15:02Z",
+          "created_at": "2026-10-22T10:15:02Z",
+          "updated_at": "2026-10-22T10:15:02Z"
+        }
+      },
+      "FeatureCreateIn": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Client-generated UUIDv7; the server keeps it",
+            "title": "Id"
+          },
+          "geom": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "GeoJSON geometry in EPSG:4326 (null for table layers)",
+            "title": "Geom"
+          },
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "pattern": "^(draft|submitted)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "schema_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Defaults to the layer's current version",
+            "title": "Schema Version"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          }
+        },
+        "title": "FeatureCreateIn",
+        "type": "object",
+        "example": {
+          "id": "0192f0c1-1234-7abc-8def-000000000001",
+          "geom": {},
+          "attributes": {},
+          "status": "string",
+          "schema_version": 1,
+          "captured_at": "2026-10-22T10:15:02Z"
+        }
+      },
+      "FeatureDetailOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "layer_id": {
+            "format": "uuid",
+            "title": "Layer Id",
+            "type": "string"
+          },
+          "layer_key": {
+            "title": "Layer Key",
+            "type": "string"
+          },
+          "geometry_type": {
+            "title": "Geometry Type",
+            "type": "string"
+          },
+          "geom": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geom"
+          },
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "review_note": {
+            "title": "Review Note",
+            "type": "string"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "computed": {
+            "$ref": "#/components/schemas/ComputedOut"
+          },
+          "qa_flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Qa Flags",
+            "type": "array"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          },
+          "created_device": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created Device"
+          },
+          "updated_device": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated Device"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "raw_track": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Track"
+          },
+          "vertex_meta": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Vertex Meta",
+            "type": "array"
+          },
+          "relations": {
+            "additionalProperties": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "description": "attribute key -> related feature id",
+            "title": "Relations",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "layer_id",
+          "layer_key",
+          "geometry_type",
+          "geom",
+          "attributes",
+          "schema_version",
+          "version",
+          "status",
+          "review_note",
+          "reviewed_at",
+          "deleted",
+          "computed",
+          "qa_flags",
+          "created_by",
+          "updated_by",
+          "created_device",
+          "updated_device",
+          "captured_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "FeatureDetailOut",
+        "type": "object",
+        "example": {
+          "id": "0192f0c1-1234-7abc-8def-000000000001",
+          "project_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "layer_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "layer_key": "string",
+          "geometry_type": "string",
+          "geom": {},
+          "attributes": {},
+          "schema_version": 1,
+          "version": 1,
+          "status": "string",
+          "review_note": "string",
+          "reviewed_at": "2026-10-22T10:15:02Z",
+          "deleted": true,
+          "computed": {
+            "area_m2": 1.5,
+            "area_ha": 1.5,
+            "area_acres": 1.5,
+            "perimeter_m": 1.5,
+            "length_m": 1.5,
+            "centroid": {},
+            "centroid_method": "string"
+          },
+          "qa_flags": [
+            "string"
+          ],
+          "created_by": "0192f0c1-1234-7abc-8def-000000000001",
+          "updated_by": "0192f0c1-1234-7abc-8def-000000000001",
+          "created_device": "0192f0c1-1234-7abc-8def-000000000001",
+          "updated_device": "0192f0c1-1234-7abc-8def-000000000001",
+          "captured_at": "2026-10-22T10:15:02Z",
+          "created_at": "2026-10-22T10:15:02Z",
+          "updated_at": "2026-10-22T10:15:02Z",
+          "raw_track": [
+            [
+              1.5
+            ]
+          ],
+          "vertex_meta": [],
+          "relations": {}
+        }
+      },
+      "FeaturePatchIn": {
+        "properties": {
+          "geom": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geom"
+          },
+          "attributes": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attributes"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "pattern": "^(draft|submitted)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "base_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Version you edited; 409 when stale (or use If-Match)",
+            "title": "Base Version"
+          }
+        },
+        "title": "FeaturePatchIn",
+        "type": "object",
+        "example": {
+          "geom": {},
+          "attributes": {},
+          "status": "string",
+          "base_version": 1
+        }
+      },
+      "HistoryOut": {
+        "properties": {
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "change_type": {
+            "title": "Change Type",
+            "type": "string"
+          },
+          "changed_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed Fields",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "review_note": {
+            "title": "Review Note",
+            "type": "string"
+          },
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "geom": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geom"
+          },
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          },
+          "changed_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed By"
+          },
+          "device": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device"
+          },
+          "change_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Id"
+          },
+          "changed_at": {
+            "format": "date-time",
+            "title": "Changed At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "change_type",
+          "changed_fields",
+          "status",
+          "review_note",
+          "deleted",
+          "geom",
+          "attributes",
+          "changed_by",
+          "device",
+          "change_id",
+          "changed_at"
+        ],
+        "title": "HistoryOut",
+        "type": "object",
+        "example": {
+          "version": 1,
+          "change_type": "string",
+          "changed_fields": [
+            "string"
+          ],
+          "status": "string",
+          "review_note": "string",
+          "deleted": true,
+          "geom": {},
+          "attributes": {},
+          "changed_by": "0192f0c1-1234-7abc-8def-000000000001",
+          "device": "0192f0c1-1234-7abc-8def-000000000001",
+          "change_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "changed_at": "2026-10-22T10:15:02Z"
+        }
+      },
+      "ReviewIn": {
+        "properties": {
+          "action": {
+            "pattern": "^(approve|reject|send_back)$",
+            "title": "Action",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "ReviewIn",
+        "type": "object",
+        "example": {
+          "action": "string",
+          "note": ""
         }
       },
       "ChangeError": {
