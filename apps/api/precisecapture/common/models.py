@@ -64,3 +64,31 @@ class TenantModel(UUIDv7Model):
         if getattr(self, "org_id", None) is None:
             self.org_id = require_org_id()
         super().save(*args, **kwargs)
+
+
+class IdempotencyKey(models.Model):
+    """
+    Idempotency-Key support for non-sync writes: the first response for (user, key, method,
+    path) is stored and replayed for 24 hours. Global table scoped by user id.
+    """
+
+    user_id = models.UUIDField()
+    key = models.CharField(max_length=200)
+    method = models.CharField(max_length=8)
+    path = models.CharField(max_length=500)
+    request_hash = models.CharField(max_length=64)
+    status_code = models.PositiveSmallIntegerField()
+    response_body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "common_idempotencykey"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user_id", "key", "method", "path"], name="common_idempotency_unique"
+            )
+        ]
+        indexes = [models.Index(fields=["created_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.method} {self.path} [{self.key}]"

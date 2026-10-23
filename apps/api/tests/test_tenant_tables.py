@@ -26,6 +26,10 @@ def _layer(org: Any) -> Any:
     return factories.LayerFactory(org=org, project=_project(org))
 
 
+def _feature(org: Any) -> Any:
+    return factories.FeatureFactory(org=org, layer=_layer(org))
+
+
 # label -> callable(org) creating one row of that model inside the given org
 TENANT_FACTORIES: dict[str, Callable[[Any], Any]] = {
     "projects.Project": _project,
@@ -37,6 +41,15 @@ TENANT_FACTORIES: dict[str, Callable[[Any], Any]] = {
         org=org, layer=_layer(org)
     ),
     "projects.LayerTemplate": lambda org: factories.LayerTemplateFactory(org=org),
+    "features.Feature": _feature,
+    "features.FeatureHistory": lambda org: factories.FeatureHistoryFactory(
+        org=org, feature=_feature(org)
+    ),
+    "features.FeatureRelation": lambda org: factories.FeatureRelationFactory(
+        org=org, from_feature=_feature(org), to_feature=_feature(org)
+    ),
+    "features.RawTrack": lambda org: factories.RawTrackFactory(org=org, feature=_feature(org)),
+    "features.VertexMeta": lambda org: factories.VertexMetaFactory(org=org, feature=_feature(org)),
 }
 
 TENANT_MODELS = sorted(
