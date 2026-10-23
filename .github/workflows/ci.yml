@@ -110,3 +110,6 @@ jobs:
         run: pnpm -r --if-present lint && pnpm -r --if-present test
       - name: Build packages
         run: pnpm -r --if-present build
+      - name: Mock server smoke test (Prism against contract/openapi.json)
+        timeout-minutes: 5
+        run: make mock-test

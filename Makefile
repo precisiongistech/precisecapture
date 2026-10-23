@@ -12,7 +12,7 @@ SCHEMA_DIR := packages/schema
 
 .PHONY: help dev-up dev-down dev-logs dev-reset api-install api-migrate api-makemigrations api-run \
         api-worker api-shell api-test api-test-integration api-lint api-format contract mock \
-        web-dev web-test web-lint schema-build schema-test check
+        mock-dynamic mock-test web-dev web-test web-lint schema-build schema-test check
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -69,13 +69,20 @@ api-format: ## ruff format + autofix
 
 # --- Contract ------------------------------------------------------------------
 
-contract: ## Export OpenAPI to contract/openapi.json and regenerate packages/api-client
+contract: ## Export OpenAPI + examples to contract/, regenerate packages/api-client types
 	$(API) python manage.py export_openapi_schema --api config.api.api --output ../../contract/openapi.json --indent 2
-	@if [ -f packages/api-client/package.json ]; then pnpm --filter @precisecapture/api-client generate; \
-	 else echo "packages/api-client not created yet (M4); contract/openapi.json exported."; fi
+	@tail -c1 contract/openapi.json | read -r _ || echo >> contract/openapi.json
+	$(API) python manage.py export_contract_examples --output ../../contract/examples
+	pnpm --filter @precisecapture/api-client generate
 
-mock: ## Prism mock server of the contract on :4010 (for the mobile app)
+mock: ## Prism mock server of the contract on :4010 (static examples; for the mobile app)
+	pnpm dlx @stoplight/prism-cli@5 mock contract/openapi.json --port 4010 --errors
+
+mock-dynamic: ## Prism mock with randomly generated data instead of the examples
 	pnpm dlx @stoplight/prism-cli@5 mock contract/openapi.json --port 4010 --dynamic
+
+mock-test: ## Start a mock and call every endpoint the phone uses (CI runs this)
+	contract/scripts/mock-smoke.sh
 
 # --- Web (React) ---------------------------------------------------------------
 
