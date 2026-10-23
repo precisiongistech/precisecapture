@@ -46,7 +46,11 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     "ninja",  # management command export_openapi_schema (make contract)
     "precisecapture.common",
+    "precisecapture.accounts",
+    "precisecapture.orgs",
 ]
+
+AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
