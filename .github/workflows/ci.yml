@@ -48,13 +48,23 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install GDAL, GEOS and PROJ
-        timeout-minutes: 8
+        timeout-minutes: 10
         env:
           DEBIAN_FRONTEND: noninteractive
+        # The runner's Azure mirror has stalled for hours twice; use the main archive and retry.
         run: |
-          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update -q
-          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y -q --no-install-recommends \
-            gdal-bin libgdal-dev libgeos-dev libproj-dev postgresql-client
+          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' \
+            /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list 2>/dev/null || true
+          for attempt in 1 2 3; do
+            if timeout 120 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 update -q; then break; fi
+            echo "apt-get update failed (attempt $attempt)"; sleep 10
+          done
+          for attempt in 1 2 3; do
+            if timeout 240 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 install -y -q --no-install-recommends \
+                gdal-bin libgdal-dev libgeos-dev libproj-dev postgresql-client; then exit 0; fi
+            echo "apt-get install failed (attempt $attempt)"; sleep 10
+          done
+          exit 1
 
       - name: Create database roles (same script as docker-compose)
         # Service containers cannot mount init scripts, so run the script against the service.
