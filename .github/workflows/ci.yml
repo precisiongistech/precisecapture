@@ -85,7 +85,7 @@ jobs:
         run: uv run pytest -ra
 
   web:
-    name: Web lint + tests
+    name: Web + schema lint, tests, build
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -98,3 +98,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Lint and test every workspace package that defines the scripts
         run: pnpm -r --if-present lint && pnpm -r --if-present test
+      - name: Build packages
+        run: pnpm -r --if-present build
