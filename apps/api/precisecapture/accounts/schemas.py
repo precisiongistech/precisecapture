@@ -67,3 +67,18 @@ class DeviceOut(Schema):
     last_seen_at: datetime | None
     last_sync_at: datetime | None
     revoked_at: datetime | None
+
+
+class OtpRequestIn(Schema):
+    destination: str = Field(..., description="Email address or E.164 phone number")
+
+
+class OtpRequestOut(Schema):
+    detail: str = "If an account exists for this destination, a code has been sent."
+    expires_in: int = Field(..., description="Code lifetime in seconds")
+
+
+class OtpVerifyIn(Schema):
+    destination: str
+    code: str = Field(..., min_length=4, max_length=8)
+    device_id: uuid.UUID | None = None

@@ -32,7 +32,7 @@ API_VERSION = "1"
 # Oldest mobile app version this server accepts.
 MIN_APP_VERSION = env.str("MIN_APP_VERSION", default="0.1.0")
 # Auth methods the login screen may offer. Extended in M2 (otp, qr).
-AUTH_METHODS: list[str] = ["password"]  # "otp" is appended once OTP lands (M2)
+AUTH_METHODS: list[str] = ["password", "otp"]
 
 PLATFORM_ADMIN_ENABLED = env.bool("PLATFORM_ADMIN_ENABLED", default=False)
 

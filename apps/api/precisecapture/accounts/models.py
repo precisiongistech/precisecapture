@@ -179,3 +179,25 @@ class RefreshToken(UUIDv7Model):
             and self.replaced_by_id is None
             and self.expires_at > timezone.now()
         )
+
+
+class OtpCode(UUIDv7Model):
+    """
+    One-time login code (ENGINEERING_NOTES.md §6): 6 digits, 10 minute expiry, 5 attempts.
+    Only the hash is stored. A destination is an email address or an E.164 phone.
+    Requesting a new code invalidates the previous ones for that destination.
+    """
+
+    destination = models.CharField(max_length=254, db_index=True)
+    code_hash = models.CharField(max_length=64)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    consumed_at = models.DateTimeField(null=True, blank=True)
+    requested_ip = models.CharField(max_length=45, blank=True)
+
+    class Meta(UUIDv7Model.Meta):
+        db_table = "accounts_otpcode"
+
+    @property
+    def is_usable(self) -> bool:
+        return self.consumed_at is None and self.expires_at > timezone.now()

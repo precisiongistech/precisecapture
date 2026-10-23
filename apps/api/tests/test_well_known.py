@@ -17,7 +17,7 @@ def test_well_known_document(client, settings, path):
         "logo_url": "https://cdn.example/logo.png",
         "api_version": "1",
         "min_app_version": "0.3.0",
-        "auth_methods": ["password"],
+        "auth_methods": ["password", "otp"],
         "api_base_url": "https://capture.example.org/api/v1",
     }
 

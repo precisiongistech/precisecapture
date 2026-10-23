@@ -1,11 +1,12 @@
 import uuid
 from typing import Any
 
+from django.conf import settings
 from django.http import HttpRequest
 from ninja import Router
 from ninja.responses import Status
 
-from precisecapture.accounts import services, tokens
+from precisecapture.accounts import otp, services, tokens
 from precisecapture.accounts.models import Device
 from precisecapture.accounts.schemas import (
     DeviceIn,
@@ -13,6 +14,9 @@ from precisecapture.accounts.schemas import (
     LoginIn,
     LogoutIn,
     MeOut,
+    OtpRequestIn,
+    OtpRequestOut,
+    OtpVerifyIn,
     RefreshIn,
     TokenPairOut,
 )
@@ -44,6 +48,19 @@ def logout(request: HttpRequest, payload: LogoutIn) -> Status[None]:
     """Revoke the refresh token chain. Idempotent."""
     tokens.revoke(payload.refresh_token)
     return Status(204, None)
+
+
+@auth_router.post("/otp/request", response=OtpRequestOut, auth=None, operation_id="otpRequest")
+def otp_request(request: HttpRequest, payload: OtpRequestIn) -> dict[str, object]:
+    """Send a one-time code by SMS or email. The reply never reveals whether the account exists."""
+    otp.request_code(request, payload.destination)
+    return {"expires_in": settings.OTP_TTL_SECONDS}
+
+
+@auth_router.post("/otp/verify", response=TokenPairOut, auth=None, operation_id="otpVerify")
+def otp_verify(request: HttpRequest, payload: OtpVerifyIn) -> tokens.TokenPair:
+    """Exchange a one-time code for tokens. 5 wrong attempts invalidate the code."""
+    return otp.verify_code(request, payload.destination, payload.code, payload.device_id)
 
 
 @me_router.get("", response=MeOut, auth=user_auth, operation_id="me")
