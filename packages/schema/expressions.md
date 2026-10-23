@@ -28,7 +28,7 @@ The syntax is deliberately close to XLSForm/ODK, so XLSForm import (later) maps 
 
 **Coercion**
 
-- Arithmetic (`+ - * div mod`, unary `-`): numbers stay numbers; a string that parses as a number is converted; anything else (null, non-numeric string, boolean, array) gives null. `div` and `mod` by zero give null.
+- Arithmetic (`+ - * div mod`, unary `-`): numbers stay numbers; a string that parses as a number is converted; anything else (null, non-numeric string, boolean, array) gives null. `div` and `mod` by zero give null; `mod` takes the sign of the dividend (`-7 mod 3` is `-1`).
 - `=` / `!=`: null is treated as `''`. If both sides are numbers or numeric strings, compare numerically (`'1.0' = 1` is true). Two booleans compare as booleans. Otherwise compare the string forms. Arrays are equal only to an array with the same elements in order.
 - `< <= > >=`: both numeric (number or numeric string) → numeric; both non-numeric strings → lexical (so ISO dates order correctly); any other combination, including null, gives null.
 - String form of a number: integers print without `.0` (`concat('A', 1.0)` is `'A1'`); other numbers use the shortest round-trip decimal form.
