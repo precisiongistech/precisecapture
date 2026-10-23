@@ -62,7 +62,10 @@ def _issue(err: ValidationError) -> SchemaIssue:
     code = err.validator or "invalid"
     if code == "additionalProperties":
         # "Additional properties are not allowed ('x' was unexpected)"
-        extra = sorted(set(err.instance) - set((err.schema.get("properties") or {}).keys()))
+        instance: Any = err.instance
+        schema: Any = err.schema
+        known = (schema.get("properties") or {}) if isinstance(schema, dict) else {}
+        extra = sorted(set(instance) - set(known.keys()))
         if extra:
             parts.append(extra[0])
     elif code == "required":
