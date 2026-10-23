@@ -4,5 +4,5 @@ packages:
 
 
 # Dependencies allowed to run install scripts (pnpm refuses unknown ones).
-onlyBuiltDependencies:
-  - esbuild
+allowBuilds:
+  esbuild: true
