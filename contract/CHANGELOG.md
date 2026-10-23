@@ -3,6 +3,18 @@
 `contract/openapi.json` is the contract with the mobile app. Each entry lists what the phone can
 rely on; breaking changes appear under **BREAKING CHANGE** and are announced to Selorm.
 
+## v0.1.1 (2026-10-24)
+
+Milestone M6. No shape changes: `syncPush` and `syncPull` are now implemented (no longer 501).
+
+- `syncPush`: idempotent on `change_id` (replays return `duplicate`), per-change results per
+  ENGINEERING_NOTES.md §2, `Content-Encoding: gzip` accepted, 200 changes max (422 above).
+- `syncPull`: latest state per feature since `cursor`, review `status` and `review_note` included,
+  `qa_flags` may contain `conflict`.
+- New: `listConflicts`, `getConflict`, `resolveConflict` (web, managers).
+- Web feature endpoints from M5 (`listFeatures`, `createFeature`, `getFeature`, `getFeatureHistory`,
+  `updateFeature`, `deleteFeature`, `restoreFeature`, `reviewFeature`, `getLayerTile`).
+
 ## v0.1.0 (2026-10-23)
 
 First published contract (milestone M4). Git tag `contract-v0.1.0`.

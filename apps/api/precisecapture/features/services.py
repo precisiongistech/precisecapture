@@ -281,6 +281,9 @@ def write_feature(req: WriteRequest) -> WriteResult:
     feature.save()
 
     history = _record_history(feature, change_type, changed, req)
+    _log_change(
+        feature, "create" if existing is None else "update", req.change_id, req.device, req.user
+    )
     _sync_relations(feature, relation_targets)
     if req.raw_track is not None:
         RawTrack.objects.update_or_create(
@@ -327,6 +330,21 @@ def _diff(
     if status != existing.status:
         changed.add("status")
     return sorted(changed)
+
+
+def _log_change(
+    feature: Feature, op: str, change_id: uuid.UUID | None, device: Device | None, user: User | None
+) -> None:
+    """Append the changelog row (ENGINEERING_NOTES.md §2); runs inside the write transaction."""
+    from precisecapture.sync import changelog
+
+    changelog.record(
+        feature,
+        op,
+        change_id=change_id,
+        device_id=device.id if device else None,
+        user_id=user.id if user else None,
+    )
 
 
 def _record_history(
@@ -386,6 +404,7 @@ def delete_feature(
         ["deleted"],
         WriteRequest(layer=feature.layer, user=user, device=device, change_id=change_id),
     )
+    _log_change(feature, "delete", change_id, device, user)
     return feature
 
 
@@ -402,6 +421,7 @@ def restore_feature(feature: Feature, user: User | None) -> Feature:
     _record_history(
         feature, ChangeType.RESTORE, ["deleted"], WriteRequest(layer=feature.layer, user=user)
     )
+    _log_change(feature, "update", None, None, user)
     return feature
 
 
@@ -445,4 +465,5 @@ def review_feature(feature: Feature, user: User, action: str, note: str = "") ->
         ["status", "review_note"],
         WriteRequest(layer=feature.layer, user=user),
     )
+    _log_change(feature, "update", None, None, user)
     return feature

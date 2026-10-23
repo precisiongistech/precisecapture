@@ -50,6 +50,15 @@ TENANT_FACTORIES: dict[str, Callable[[Any], Any]] = {
     ),
     "features.RawTrack": lambda org: factories.RawTrackFactory(org=org, feature=_feature(org)),
     "features.VertexMeta": lambda org: factories.VertexMetaFactory(org=org, feature=_feature(org)),
+    "sync.ProjectSyncState": lambda org: factories.ProjectSyncStateFactory(
+        org=org, project=_project(org)
+    ),
+    "sync.ChangeLog": lambda org: factories.ChangeLogFactory(org=org, project=_project(org)),
+    "sync.AppliedChange": lambda org: factories.AppliedChangeFactory(
+        org=org, project=_project(org)
+    ),
+    "sync.SyncCursor": lambda org: factories.SyncCursorFactory(org=org, project=_project(org)),
+    "sync.Conflict": lambda org: factories.ConflictFactory(org=org, feature=_feature(org)),
 }
 
 TENANT_MODELS = sorted(

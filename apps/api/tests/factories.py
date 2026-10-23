@@ -1,5 +1,7 @@
 """factory_boy factories shared by the test suite."""
 
+import uuid
+
 import factory
 from factory.django import DjangoModelFactory
 
@@ -20,6 +22,13 @@ from precisecapture.projects.models import (
     Project,
     ProjectMember,
     ProjectRole,
+)
+from precisecapture.sync.models import (
+    AppliedChange,
+    ChangeLog,
+    Conflict,
+    ProjectSyncState,
+    SyncCursor,
 )
 
 
@@ -176,3 +185,55 @@ class VertexMetaFactory(DjangoModelFactory[VertexMeta]):
     org = factory.LazyAttribute(lambda o: o.feature.org)
     vertex_index = 0
     accuracy_m = 3.1
+
+
+class ProjectSyncStateFactory(DjangoModelFactory[ProjectSyncState]):
+    class Meta:
+        model = ProjectSyncState
+
+    project = factory.SubFactory(ProjectFactory)
+    org = factory.LazyAttribute(lambda o: o.project.org)
+
+
+class ChangeLogFactory(DjangoModelFactory[ChangeLog]):
+    class Meta:
+        model = ChangeLog
+
+    project = factory.SubFactory(ProjectFactory)
+    org = factory.LazyAttribute(lambda o: o.project.org)
+    seq = factory.Sequence(lambda n: n + 1)
+    entity_id = factory.LazyFunction(uuid.uuid4)
+    op = "create"
+    feature_version = 1
+
+
+class AppliedChangeFactory(DjangoModelFactory[AppliedChange]):
+    class Meta:
+        model = AppliedChange
+
+    project = factory.SubFactory(ProjectFactory)
+    org = factory.LazyAttribute(lambda o: o.project.org)
+    change_id = factory.LazyFunction(uuid.uuid4)
+    result = {"status": "accepted"}
+
+
+class SyncCursorFactory(DjangoModelFactory[SyncCursor]):
+    class Meta:
+        model = SyncCursor
+
+    project = factory.SubFactory(ProjectFactory)
+    org = factory.LazyAttribute(lambda o: o.project.org)
+    device = factory.SubFactory(DeviceFactory)
+
+
+class ConflictFactory(DjangoModelFactory[Conflict]):
+    class Meta:
+        model = Conflict
+
+    feature = factory.SubFactory(FeatureFactory)
+    project = factory.LazyAttribute(lambda o: o.feature.project)
+    org = factory.LazyAttribute(lambda o: o.feature.org)
+    reason = "field_overlap"
+    server_version = 2
+    local_payload = {}
+    server_payload = {}

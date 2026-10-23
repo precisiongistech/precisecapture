@@ -6851,7 +6851,7 @@
             }
           }
         },
-        "description": "Push up to 200 outbox changes for one project (gzip accepted). One transaction per project;\nper-change results are accepted | merged | conflict | rejected | duplicate. Idempotent on\nchange_id. **Not implemented until M6: returns 501.**",
+        "description": "Push up to 200 outbox changes for one project (gzip accepted). One transaction per project;\nper-change results are accepted | merged | conflict | rejected | duplicate. Idempotent on\nchange_id: replaying a batch returns the stored results as `duplicate`.",
         "tags": [
           "sync"
         ],
@@ -7137,10 +7137,398 @@
             }
           }
         },
-        "description": "Latest state of every feature changed since `cursor` (the last server_seq the device\napplied), in seq order, with `next_cursor`, `has_more` and the project's `config_version`.\n`limit` is 1-500. **Not implemented until M6: returns 501.**",
+        "description": "Latest state of every feature changed since `cursor` (the last server_seq the device\napplied), in seq order, with `next_cursor`, `has_more` and the project's `config_version`.\nReview status changes and send-back notes are included. `limit` is 1-500.",
         "tags": [
           "sync"
         ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/conflicts": {
+      "get": {
+        "operationId": "listConflicts",
+        "summary": "List Conflicts",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project",
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "default": "open",
+              "pattern": "^(open|resolved|all)$",
+              "title": "Status",
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConflictOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Open (default), resolved or all conflicts in the projects the caller manages.",
+        "tags": [
+          "conflicts"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/conflicts/{conflict_id}": {
+      "get": {
+        "operationId": "getConflict",
+        "summary": "Get Conflict",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "conflict_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Conflict Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "conflicts"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/conflicts/{conflict_id}/resolve": {
+      "post": {
+        "operationId": "resolveConflict",
+        "summary": "Resolve",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "conflict_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Conflict Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Keep the server state, apply the device's payload, or write a merged one. Managers only.",
+        "tags": [
+          "conflicts"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveIn"
+              }
+            }
+          },
+          "required": true
+        },
         "security": [
           {
             "TenantAuth": []
@@ -11809,6 +12197,228 @@
           "next_cursor": 42,
           "has_more": false,
           "config_version": 8
+        }
+      },
+      "ConflictListParams": {
+        "properties": {
+          "project": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project"
+          },
+          "status": {
+            "default": "open",
+            "pattern": "^(open|resolved|all)$",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "ConflictListParams",
+        "type": "object",
+        "example": {
+          "project": "0192f0c1-1234-7abc-8def-000000000001",
+          "status": "open"
+        }
+      },
+      "ConflictOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "feature_id": {
+            "format": "uuid",
+            "title": "Feature Id",
+            "type": "string"
+          },
+          "layer_id": {
+            "format": "uuid",
+            "title": "Layer Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "base_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Version"
+          },
+          "server_version": {
+            "title": "Server Version",
+            "type": "integer"
+          },
+          "overlapping_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Overlapping Fields",
+            "type": "array"
+          },
+          "local_payload": {
+            "additionalProperties": true,
+            "title": "Local Payload",
+            "type": "object"
+          },
+          "server_payload": {
+            "additionalProperties": true,
+            "title": "Server Payload",
+            "type": "object"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "resolution": {
+            "title": "Resolution",
+            "type": "string"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved By"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "feature_id",
+          "layer_id",
+          "reason",
+          "base_version",
+          "server_version",
+          "overlapping_fields",
+          "local_payload",
+          "server_payload",
+          "status",
+          "resolution",
+          "device_id",
+          "user_id",
+          "resolved_by",
+          "resolved_at",
+          "created_at"
+        ],
+        "title": "ConflictOut",
+        "type": "object",
+        "example": {
+          "id": "0192f0c1-1234-7abc-8def-000000000001",
+          "project_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "feature_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "layer_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "reason": "string",
+          "base_version": 1,
+          "server_version": 1,
+          "overlapping_fields": [
+            "string"
+          ],
+          "local_payload": {},
+          "server_payload": {},
+          "status": "string",
+          "resolution": "string",
+          "device_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "user_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "resolved_by": "0192f0c1-1234-7abc-8def-000000000001",
+          "resolved_at": "2026-10-22T10:15:02Z",
+          "created_at": "2026-10-22T10:15:02Z"
+        }
+      },
+      "ResolveIn": {
+        "properties": {
+          "resolution": {
+            "pattern": "^(keep_server|keep_device|merged)$",
+            "title": "Resolution",
+            "type": "string"
+          },
+          "merged": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "{geom, attributes, status} when resolution=merged",
+            "title": "Merged"
+          }
+        },
+        "required": [
+          "resolution"
+        ],
+        "title": "ResolveIn",
+        "type": "object",
+        "example": {
+          "resolution": "string",
+          "merged": {}
         }
       },
       "AttachmentUploadOut": {
