@@ -37,6 +37,21 @@ class NoTenantContext(RuntimeError):
     pass
 
 
+def clear_tenant() -> None:
+    """Drop the contextvar (the DB setting is transaction-local and clears itself)."""
+    _current_org.set(None)
+
+
+def enter_tenant(org_id: uuid.UUID, using: str = "default") -> None:
+    """
+    Set the tenant for the rest of the current transaction and thread (used by the request
+    auth class, which runs inside ATOMIC_REQUESTS and cannot wrap the view in a `with`).
+    The middleware clears the contextvar when the request ends.
+    """
+    _current_org.set(org_id)
+    set_db_tenant(org_id, using)
+
+
 def set_db_tenant(org_id: uuid.UUID | None, using: str = "default") -> None:
     """Set the transaction-local Postgres setting the RLS policies read."""
     with connections[using].cursor() as cur:

@@ -145,3 +145,37 @@ class Device(UUIDv7Model):
 
     def __str__(self) -> str:
         return f"{self.platform} {self.model} ({self.user})"
+
+
+class RefreshToken(UUIDv7Model):
+    """
+    Opaque refresh token, stored hashed, rotated on every use (ENGINEERING_NOTES.md §6).
+
+    All tokens issued by rotation from one login share a `family`. Presenting a token that
+    was already rotated means it leaked: the whole family is revoked.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="refresh_tokens")
+    device = models.ForeignKey(
+        Device, null=True, blank=True, on_delete=models.CASCADE, related_name="refresh_tokens"
+    )
+    token_hash = models.CharField(max_length=64, unique=True)
+    family = models.UUIDField(db_index=True)
+    expires_at = models.DateTimeField()
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    replaced_by = models.OneToOneField(
+        "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="replaces"
+    )
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta(UUIDv7Model.Meta):
+        db_table = "accounts_refreshtoken"
+        indexes = [models.Index(fields=["user", "revoked_at"])]
+
+    @property
+    def is_active(self) -> bool:
+        return (
+            self.revoked_at is None
+            and self.replaced_by_id is None
+            and self.expires_at > timezone.now()
+        )

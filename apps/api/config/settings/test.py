@@ -18,7 +18,8 @@ DATABASES = copy.deepcopy(DATABASES)
 
 DEBUG = False
 ALLOWED_HOSTS = ["*"]
-SECRET_KEY = "test-only-not-secret"
+SECRET_KEY = "test-only-not-secret-but-long-enough-for-hmac-sha256-keys"
+JWT_SIGNING_KEY = SECRET_KEY
 
 DATABASES["default"] = {
     **env.db_url("MIGRATION_DATABASE_URL"),
@@ -40,4 +41,5 @@ CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 STORAGES["default"] = {"BACKEND": "django.core.files.storage.InMemoryStorage"}

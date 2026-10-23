@@ -1,6 +1,13 @@
 import pytest
+from django.core.cache import cache
 from django.db import connection
 from django.test import Client
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache() -> None:
+    """Rate-limit counters live in the cache; never let them leak between tests."""
+    cache.clear()
 
 
 @pytest.fixture

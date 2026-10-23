@@ -32,7 +32,7 @@ API_VERSION = "1"
 # Oldest mobile app version this server accepts.
 MIN_APP_VERSION = env.str("MIN_APP_VERSION", default="0.1.0")
 # Auth methods the login screen may offer. Extended in M2 (otp, qr).
-AUTH_METHODS: list[str] = ["password"]
+AUTH_METHODS: list[str] = ["password"]  # "otp" is appended once OTP lands (M2)
 
 PLATFORM_ADMIN_ENABLED = env.bool("PLATFORM_ADMIN_ENABLED", default=False)
 
@@ -56,6 +56,9 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Clears the tenant contextvar after each request. The tenant itself is set by the Ninja
+    # auth class inside the request transaction (ENGINEERING_NOTES.md §1), not here.
+    "precisecapture.common.middleware.TenantContextResetMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -129,11 +132,25 @@ JWT_SIGNING_KEY = env.str("JWT_SIGNING_KEY", default=SECRET_KEY)
 JWT_ACCESS_TTL_SECONDS = env.int("JWT_ACCESS_TTL_SECONDS", default=900)
 JWT_REFRESH_TTL_DAYS = env.int("JWT_REFRESH_TTL_DAYS", default=30)
 OTP_TTL_SECONDS = env.int("OTP_TTL_SECONDS", default=600)
+OTP_MAX_ATTEMPTS = env.int("OTP_MAX_ATTEMPTS", default=5)
 SMS_BACKEND = env.str("SMS_BACKEND", default="console")
 
-# --- Celery / Redis ---------------------------------------------------------
+# Rate limits: "<count>/<seconds>". Enforced with the cache (Redis in dev/prod).
+RATE_LIMIT_LOGIN_PER_IDENTIFIER = env.str("RATE_LIMIT_LOGIN_PER_IDENTIFIER", default="10/900")
+RATE_LIMIT_LOGIN_PER_IP = env.str("RATE_LIMIT_LOGIN_PER_IP", default="50/900")
+RATE_LIMIT_OTP_PER_DESTINATION = env.str("RATE_LIMIT_OTP_PER_DESTINATION", default="5/3600")
+RATE_LIMIT_OTP_PER_IP = env.str("RATE_LIMIT_OTP_PER_IP", default="20/3600")
+
+# --- Celery / Redis / cache --------------------------------------------------
 
 REDIS_URL = env.str("REDIS_URL", default="redis://localhost:6379/0")
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+        "KEY_PREFIX": "pc",
+    }
+}
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", default=REDIS_URL)
 CELERY_RESULT_BACKEND = env.str("CELERY_RESULT_BACKEND", default=REDIS_URL)
 CELERY_TASK_SERIALIZER = "json"
