@@ -30,15 +30,27 @@ def api_client(client, people):
 
 
 def test_stubs_return_501_problem_json(api_client: Api):
-    r = api_client.post("/api/v1/sync/push", PUSH_REQUEST_EXAMPLE)
-    assert r.status_code == 501 and r["Content-Type"] == "application/problem+json"
-    assert r.json()["type"].endswith("/not-implemented")
+    """Sync is real since M6 (404: example project absent here); attachments stay stubbed."""
+    assert api_client.post("/api/v1/sync/push", PUSH_REQUEST_EXAMPLE).status_code == 404
     assert (
         api_client.get(
             "/api/v1/sync/pull?project=01a16990-2368-7736-9254-4cbea027a751&cursor=0"
         ).status_code
-        == 501
+        == 404
     )
+    r = api_client.post(
+        "/api/v1/attachments",
+        {
+            "id": "0192f0c1-1234-7abc-8def-0000000000cc",
+            "feature_id": "0192f0c1-1234-7abc-8def-000000000001",
+            "field_key": "photos",
+            "content_type": "image/jpeg",
+            "size": 10,
+            "checksum_sha256": "a" * 64,
+        },
+    )
+    assert r.status_code == 501 and r["Content-Type"] == "application/problem+json"
+    assert r.json()["type"].endswith("/not-implemented")
     assert (
         api_client.post(
             "/api/v1/attachments",

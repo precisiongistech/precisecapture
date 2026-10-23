@@ -187,6 +187,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/conflicts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Conflicts
+         * @description Open (default), resolved or all conflicts in the projects the caller manages.
+         */
+        get: operations["listConflicts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conflicts/{conflict_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Conflict */
+        get: operations["getConflict"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conflicts/{conflict_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolve
+         * @description Keep the server state, apply the device's payload, or write a merged one. Managers only.
+         */
+        post: operations["resolveConflict"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/devices": {
         parameters: {
             query?: never;
@@ -922,7 +979,7 @@ export interface paths {
          * Pull
          * @description Latest state of every feature changed since `cursor` (the last server_seq the device
          *     applied), in seq order, with `next_cursor`, `has_more` and the project's `config_version`.
-         *     `limit` is 1-500. **Not implemented until M6: returns 501.**
+         *     Review status changes and send-back notes are included. `limit` is 1-500.
          */
         get: operations["syncPull"];
         put?: never;
@@ -946,7 +1003,7 @@ export interface paths {
          * Push
          * @description Push up to 200 outbox changes for one project (gzip accepted). One transaction per project;
          *     per-change results are accepted | merged | conflict | rejected | duplicate. Idempotent on
-         *     change_id. **Not implemented until M6: returns 501.**
+         *     change_id: replaying a batch returns the stored results as `duplicate`.
          */
         post: operations["syncPush"];
         delete?: never;
@@ -1537,6 +1594,101 @@ export interface components {
             length_m: number | null;
             /** Perimeter M */
             perimeter_m: number | null;
+        };
+        /**
+         * ConflictListParams
+         * @example {
+         *       "project": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "status": "open"
+         *     }
+         */
+        ConflictListParams: {
+            /** Project */
+            project?: string | null;
+            /**
+             * Status
+             * @default open
+             */
+            status: string;
+        };
+        /**
+         * ConflictOut
+         * @example {
+         *       "id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "project_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "feature_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "layer_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "reason": "string",
+         *       "base_version": 1,
+         *       "server_version": 1,
+         *       "overlapping_fields": [
+         *         "string"
+         *       ],
+         *       "local_payload": {},
+         *       "server_payload": {},
+         *       "status": "string",
+         *       "resolution": "string",
+         *       "device_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "user_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "resolved_by": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "resolved_at": "2026-10-22T10:15:02Z",
+         *       "created_at": "2026-10-22T10:15:02Z"
+         *     }
+         */
+        ConflictOut: {
+            /** Base Version */
+            base_version: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Device Id */
+            device_id: string | null;
+            /**
+             * Feature Id
+             * Format: uuid
+             */
+            feature_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Layer Id
+             * Format: uuid
+             */
+            layer_id: string;
+            /** Local Payload */
+            local_payload: {
+                [key: string]: unknown;
+            };
+            /** Overlapping Fields */
+            overlapping_fields: string[];
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Reason */
+            reason: string;
+            /** Resolution */
+            resolution: string;
+            /** Resolved At */
+            resolved_at: string | null;
+            /** Resolved By */
+            resolved_by: string | null;
+            /** Server Payload */
+            server_payload: {
+                [key: string]: unknown;
+            };
+            /** Server Version */
+            server_version: number;
+            /** Status */
+            status: string;
+            /** User Id */
+            user_id: string | null;
         };
         /**
          * DeviceIn
@@ -3266,6 +3418,24 @@ export interface components {
             refresh_token: string;
         };
         /**
+         * ResolveIn
+         * @example {
+         *       "resolution": "string",
+         *       "merged": {}
+         *     }
+         */
+        ResolveIn: {
+            /**
+             * Merged
+             * @description {geom, attributes, status} when resolution=merged
+             */
+            merged?: {
+                [key: string]: unknown;
+            } | null;
+            /** Resolution */
+            resolution: string;
+        };
+        /**
          * ReviewIn
          * @example {
          *       "action": "string",
@@ -3551,6 +3721,8 @@ export type SchemaChangeMeta = components['schemas']['ChangeMeta'];
 export type SchemaChangeResult = components['schemas']['ChangeResult'];
 export type SchemaComputed = components['schemas']['Computed'];
 export type SchemaComputedOut = components['schemas']['ComputedOut'];
+export type SchemaConflictListParams = components['schemas']['ConflictListParams'];
+export type SchemaConflictOut = components['schemas']['ConflictOut'];
 export type SchemaDeviceIn = components['schemas']['DeviceIn'];
 export type SchemaDeviceOut = components['schemas']['DeviceOut'];
 export type SchemaFeatureCreateIn = components['schemas']['FeatureCreateIn'];
@@ -3600,6 +3772,7 @@ export type SchemaPullResponse = components['schemas']['PullResponse'];
 export type SchemaPushRequest = components['schemas']['PushRequest'];
 export type SchemaPushResponse = components['schemas']['PushResponse'];
 export type SchemaRefreshIn = components['schemas']['RefreshIn'];
+export type SchemaResolveIn = components['schemas']['ResolveIn'];
 export type SchemaReviewIn = components['schemas']['ReviewIn'];
 export type SchemaSchemaDraftIn = components['schemas']['SchemaDraftIn'];
 export type SchemaSchemaOut = components['schemas']['SchemaOut'];
@@ -4238,6 +4411,275 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenPairOut"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listConflicts: {
+        parameters: {
+            query?: {
+                project?: string | null;
+                status?: string;
+            };
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConflictOut"][];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getConflict: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                conflict_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConflictOut"];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    resolveConflict: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                conflict_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConflictOut"];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
             /** @description Not found (or not visible in this organisation) */
