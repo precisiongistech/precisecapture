@@ -83,11 +83,17 @@ jobs:
 
       - name: Start an S3-compatible store (versitygw)
         run: |
-          docker run -d --name s3 -p 7070:7070 \
+          mkdir -p "$RUNNER_TEMP/gw"
+          docker run -d --name s3 -p 7070:7070 -v "$RUNNER_TEMP/gw:/data" \
             -e ROOT_ACCESS_KEY=ci-access -e ROOT_SECRET_KEY=ci-secret-key \
-            versity/versitygw:v1.9.0 posix /tmp/gw
-          for i in $(seq 1 30); do curl -sf http://localhost:7070/ -o /dev/null && break || sleep 1; done
-          docker logs s3 | tail -3
+            versity/versitygw:v1.9.0 posix /data
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:7070/ || true)
+            if [ "$code" != "000" ]; then echo "versitygw answering ($code)"; break; fi
+            sleep 1
+          done
+          docker logs s3 | tail -5
+          [ "$(docker inspect -f '{{.State.Running}}' s3)" = "true" ] || { echo "versitygw not running"; exit 1; }
 
       - uses: astral-sh/setup-uv@v6
         with:
