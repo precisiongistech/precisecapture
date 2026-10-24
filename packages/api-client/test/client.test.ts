@@ -101,6 +101,13 @@ describe("PreciseCaptureClient", () => {
     expect(store.getAccessToken()).toBeNull();
   });
 
+  it("works with a relative base URL (dev proxy)", async () => {
+    const f = fakeFetch(() => json(200, { user: { id: "u" }, memberships: [], device_id: null }));
+    const client = new PreciseCaptureClient({ baseUrl: "", fetch: f.fn });
+    await client.get("/api/v1/me", { query: { x: 1 } as never });
+    expect(f.calls[0]!.url).toMatch(/^https?:\/\/[^/]+\/api\/v1\/me\?x=1$/);
+  });
+
   it("login stores the pair; 204 resolves to undefined", async () => {
     const f = fakeFetch((call) => (call.url.endsWith("/auth/login") ? json(200, pair) : new Response(null, { status: 204 })));
     const client = new PreciseCaptureClient({ baseUrl: "https://api.test", fetch: f.fn });
