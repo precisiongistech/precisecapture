@@ -29,6 +29,8 @@ import {
   Th,
 } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
+import { ImportJson } from "@/components/ImportJson";
+import { CaptureRulesEditor, type PartialProfile } from "@/features/layers/CaptureRulesEditor";
 import { AreaMap, type AreaGeometry, type Polygon } from "@/map/AreaMap";
 
 export function ProjectPage() {
@@ -41,6 +43,7 @@ export function ProjectPage() {
     <div className="space-y-6">
       <ProjectHeader project={project.data} canManage={canManage} />
       <LayersCard project={project.data} canManage={canManage} />
+      {canManage && <ProjectCaptureRules project={project.data} />}
       {canManage && <MembersCard project={project.data} />}
     </div>
   );
@@ -177,6 +180,51 @@ function LayersCard({ project, canManage }: { project: Project; canManage: boole
           ))}
         </Table>
       )}
+    </Card>
+  );
+}
+
+function ProjectCaptureRules({ project }: { project: Project }) {
+  const toast = useToast();
+  const layers = useLayers(project.id);
+  const initial = ((project.settings as { capture_profile?: PartialProfile }).capture_profile ??
+    {}) as PartialProfile;
+  const [value, setValue] = useState<PartialProfile>(initial);
+  const save = useInvalidatingMutation(
+    () =>
+      api.patch("/api/v1/projects/{project_id}", {
+        path: { project_id: project.id },
+        body: { settings: { ...project.settings, capture_profile: value } },
+      }),
+    [keys.project(project.id), keys.projects],
+    { onSuccess: () => toast.push("Project capture rules saved") },
+  );
+  return (
+    <Card
+      title="Project capture rules"
+      actions={
+        <>
+          <ImportJson
+            label="Capture profile JSON"
+            onImport={(doc) => setValue(doc as PartialProfile)}
+          />
+          <Button onClick={() => save.mutate(undefined)} disabled={save.isPending}>
+            Save
+          </Button>
+        </>
+      }
+    >
+      <p className="mb-3 text-sm text-neutral-600">
+        Overrides the organisation defaults for every layer in this project; layers can override
+        again unless a setting is locked.
+      </p>
+      <CaptureRulesEditor
+        value={value}
+        onChange={setValue}
+        geometryType={null}
+        layerKeys={(layers.data ?? []).map((l) => l.key)}
+      />
+      {save.isError && <Alert>{errorMessage(save.error)}</Alert>}
     </Card>
   );
 }

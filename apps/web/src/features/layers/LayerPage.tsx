@@ -35,6 +35,7 @@ import {
   type SchemaDoc,
 } from "@/features/layers/AttributeBuilder";
 import { CaptureRulesEditor, type PartialProfile } from "@/features/layers/CaptureRulesEditor";
+import { ImportJson } from "@/components/ImportJson";
 import { FormPreview } from "@/features/layers/FormPreview";
 
 export function LayerPage() {
@@ -230,6 +231,16 @@ function AttributesTab({ layer, layerKeys }: { layer: Layer; layerKeys: string[]
         actions={
           <>
             {dirty && <Badge tone="amber">unsaved</Badge>}
+            <ImportJson
+              label="Schema JSON"
+              onImport={(doc) =>
+                setDraft({
+                  fields: (doc.fields as FieldDef[]) ?? [],
+                  lists: (doc.lists as SchemaDoc["lists"]) ?? {},
+                  title: (doc.title as SchemaDoc["title"]) ?? draft.title,
+                })
+              }
+            />
             <Button onClick={() => save.mutate(undefined)} disabled={save.isPending || !dirty}>
               Save draft
             </Button>
@@ -280,9 +291,15 @@ function RulesTab({ layer, layerKeys }: { layer: Layer; layerKeys: string[] }) {
     <Card
       title="Capture rules"
       actions={
-        <Button onClick={() => save.mutate(undefined)} disabled={save.isPending}>
-          Save
-        </Button>
+        <>
+          <ImportJson
+            label="Capture profile JSON"
+            onImport={(doc) => setValue(doc as PartialProfile)}
+          />
+          <Button onClick={() => save.mutate(undefined)} disabled={save.isPending}>
+            Save
+          </Button>
+        </>
       }
     >
       <p className="mb-3 text-sm text-neutral-600">

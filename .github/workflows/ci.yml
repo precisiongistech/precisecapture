@@ -114,6 +114,46 @@ jobs:
         working-directory: apps/api
         run: uv run pytest -ra
 
+      # --- end-to-end: web app against this API (seed_pilot data) ---------------------------
+      - name: Migrate and seed the dev database for e2e
+        working-directory: apps/api
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.dev
+          DJANGO_SECRET_KEY: ci-only-ci-only-ci-only-ci-only-ci-only
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+          CORS_ALLOWED_ORIGINS: http://localhost:5173
+          PUBLIC_BASE_URL: http://localhost:8000
+        run: |
+          uv run python manage.py migrate --database=migrations
+          uv run python manage.py seed_pilot
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build workspace packages (the web app consumes their dist)
+        run: pnpm --filter "./packages/*" build
+      - name: Install Playwright browser
+        run: pnpm --filter web exec playwright install --with-deps chromium
+      - name: Run the API and the Playwright suite
+        working-directory: apps/api
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.dev
+          DJANGO_SECRET_KEY: ci-only-ci-only-ci-only-ci-only-ci-only
+          DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+          PUBLIC_BASE_URL: http://localhost:8000
+        run: |
+          uv run python manage.py runserver 127.0.0.1:8000 > "$RUNNER_TEMP/api.log" 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/health >/dev/null && break; sleep 1; done
+          cd ../web && pnpm exec playwright test --reporter=line || { tail -50 "$RUNNER_TEMP/api.log"; exit 1; }
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
+
   web:
     name: Web + schema lint, tests, build
     runs-on: ubuntu-24.04
@@ -126,10 +166,12 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Build workspace packages first (the web app consumes their dist)
+        run: pnpm --filter "./packages/*" build
       - name: Lint and test every workspace package that defines the scripts
         run: pnpm -r --if-present lint && pnpm -r --if-present test
-      - name: Build packages
-        run: pnpm -r --if-present build
+      - name: Build the web app
+        run: pnpm --filter web build
       - name: Mock server smoke test (Prism against contract/openapi.json)
         timeout-minutes: 5
         run: make mock-test
