@@ -128,8 +128,13 @@ def validate_capture_profile_semantics(
     *,
     geometry_type: str | None = None,
     layer_keys: Sequence[str] | None = None,
+    reference_layer_keys: Sequence[str] | None = None,
 ) -> list[SchemaIssue]:
-    """The six cross-field rules a JSON Schema cannot express; context rules skip when absent."""
+    """The cross-field rules a JSON Schema cannot express; context rules skip when absent.
+
+    ``reference_layer_keys`` are the keys of the project's layers with role ``reference``;
+    when given, ``validation.spatialRules[].referenceLayer`` must be one of them.
+    """
     issues: list[SchemaIssue] = []
 
     modes = profile.get("modes")
@@ -188,6 +193,25 @@ def validate_capture_profile_semantics(
 
     validation = profile.get("validation")
     if isinstance(validation, dict):
+        rules = validation.get("spatialRules")
+        if isinstance(rules, list) and (layer_keys is not None or reference_layer_keys is not None):
+            known = set(layer_keys or ()) | set(reference_layer_keys or ())
+            reference = set(reference_layer_keys) if reference_layer_keys is not None else None
+            for i, rule in enumerate(rules):
+                if not isinstance(rule, dict) or not isinstance(rule.get("referenceLayer"), str):
+                    continue
+                ref = rule["referenceLayer"]
+                field = f"validation.spatialRules.{i}.referenceLayer"
+                if ref not in known:
+                    issues.append(
+                        SchemaIssue(field, "unknown_layer", f"Layer {ref!r} is not in this project")
+                    )
+                elif reference is not None and ref not in reference:
+                    issues.append(
+                        SchemaIssue(
+                            field, "not_reference", f"Layer {ref!r} is not a reference layer"
+                        )
+                    )
         min_area, max_area = validation.get("minAreaSqm"), validation.get("maxAreaSqm")
         if min_area is not None and max_area is not None and max_area < min_area:
             issues.append(

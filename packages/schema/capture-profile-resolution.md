@@ -26,7 +26,7 @@ Inputs are partial profiles (any may be null). Output is the effective profile t
    `centroid`, `display`, and anything unknown) are ignored.
 6. The output keeps the effective `locked` flags so the app can hide the toggles.
 
-## validateCaptureProfileSemantics(profile, { geometryType?, layerKeys? })
+## validateCaptureProfileSemantics(profile, { geometryType?, layerKeys?, referenceLayerKeys? })
 
 Returns a list of `{ field, code, message }` (empty when valid). Rules that need context are
 skipped when it is absent, so org- and project-level partial profiles can be checked too.
@@ -38,6 +38,8 @@ skipped when it is absent, so org- and project-level partial profiles can be che
 | `not_allowed` | `stream.intervalMeters` | must be in `stream.allowedIntervalsMeters` (when both present) |
 | `geometry` | `stream`, `snapping`, `trace`, `autoClose` | present only on line or polygon layers; the geometry comes from the context, else from `profile.geometryType`, else the rule is skipped |
 | `unknown_layer` | `snapping.layers.N`, `trace.layers.N`, `validation.topology.noOverlapWith.N`, `validation.topology.noGapsWith.N` | every entry is `self` or one of `layerKeys` (when given) |
+| `unknown_layer` | `validation.spatialRules.N.referenceLayer` | must be one of `layerKeys` or `referenceLayerKeys` (when either is given) |
+| `not_reference` | `validation.spatialRules.N.referenceLayer` | must be one of `referenceLayerKeys` (when given), i.e. a layer with `role = reference` |
 | `range` | `validation.maxAreaSqm` | `maxAreaSqm` must not be below `minAreaSqm` (when both present) |
 
 The server runs both the JSON Schema and these checks on every save (M3). The web form builder

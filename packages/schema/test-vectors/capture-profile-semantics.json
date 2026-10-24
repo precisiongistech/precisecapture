@@ -1,5 +1,5 @@
 {
-  "description": "Shared test vectors for validateCaptureProfileSemantics(profile, {geometryType?, layerKeys?}): the cross-field rules a JSON Schema cannot express. Each expected error is {field, code}; order does not matter. geometryType and layerKeys are optional context: rules needing them are skipped when absent.",
+  "description": "Shared test vectors for validateCaptureProfileSemantics(profile, {geometryType?, layerKeys?, referenceLayerKeys?}): the cross-field rules a JSON Schema cannot express. Each expected error is {field, code}; order does not matter. geometryType, layerKeys and referenceLayerKeys are optional context: rules needing them are skipped when absent.",
   "cases": [
     {
       "name": "valid pilot profile",
@@ -375,6 +375,107 @@
         }
       ],
       "geometryType": "polygon"
+    },
+    {
+      "name": "spatial rule names a reference layer",
+      "profile": {
+        "validation": {
+          "spatialRules": [
+            {
+              "referenceLayer": "lyr_forest_reserves",
+              "action": "flag"
+            }
+          ]
+        }
+      },
+      "expectErrors": [],
+      "layerKeys": [
+        "lyr_farms"
+      ],
+      "referenceLayerKeys": [
+        "lyr_forest_reserves"
+      ]
+    },
+    {
+      "name": "spatial rule cannot target a data layer",
+      "profile": {
+        "validation": {
+          "spatialRules": [
+            {
+              "referenceLayer": "lyr_farms",
+              "action": "flag"
+            }
+          ]
+        }
+      },
+      "expectErrors": [
+        {
+          "field": "validation.spatialRules.0.referenceLayer",
+          "code": "not_reference"
+        }
+      ],
+      "layerKeys": [
+        "lyr_farms"
+      ],
+      "referenceLayerKeys": [
+        "lyr_forest_reserves"
+      ]
+    },
+    {
+      "name": "spatial rule layer must exist",
+      "profile": {
+        "validation": {
+          "spatialRules": [
+            {
+              "referenceLayer": "lyr_missing",
+              "action": "flag"
+            }
+          ]
+        }
+      },
+      "expectErrors": [
+        {
+          "field": "validation.spatialRules.0.referenceLayer",
+          "code": "unknown_layer"
+        }
+      ],
+      "layerKeys": [
+        "lyr_farms"
+      ],
+      "referenceLayerKeys": [
+        "lyr_forest_reserves"
+      ]
+    },
+    {
+      "name": "spatial rule with only layerKeys checks existence, not role",
+      "profile": {
+        "validation": {
+          "spatialRules": [
+            {
+              "referenceLayer": "lyr_farms",
+              "action": "flag"
+            }
+          ]
+        }
+      },
+      "expectErrors": [],
+      "layerKeys": [
+        "lyr_farms"
+      ]
+    },
+    {
+      "name": "spatial rule skipped without layer context",
+      "profile": {
+        "validation": {
+          "spatialRules": [
+            {
+              "referenceLayer": "lyr_missing",
+              "action": "flag"
+            }
+          ]
+        }
+      },
+      "expectErrors": []
     }
   ]
 }

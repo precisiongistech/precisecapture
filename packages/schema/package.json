@@ -1,6 +1,6 @@
 {
   "name": "@precisecapture/schema",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "PreciseCapture shared contract: layer schemas, capture profiles, sync wire formats, expression language, capture profile resolution",
   "license": "UNLICENSED",
   "private": false,
