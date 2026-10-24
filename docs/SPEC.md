@@ -130,9 +130,9 @@ The MVP proves the hard part: smooth, offline geometry capture with configurable
 | Forms | Text, number, date, select one/many, photo, GPS-derived fields; required and range validation; skip logic | Calculations, cascading selects, repeat groups, sticky values, barcode/QR, signature, voice note; XLSForm import; form versioning | Voice-to-form; photo-based attribute suggestions |
 | Offline | Download project (forms + features); offline basemap packs; outbox with retry | Area-based partial download; offline admin boundary lookup; resumable photo upload | Offline imagery packs; peer sync between devices |
 | Data quality | Required fields, validation, GPS accuracy stored per vertex | Duplicate-nearby warning; fake-GPS detection; photo GPS/time stamp | Rule engine for custom checks; anomaly flags |
-| Web: setup | Orgs, users, roles; projects and layers; form builder; capture profile editor | Data upload (SHP, GeoJSON, KML, CSV, GPKG); layer styling; basemap pack builder | Templates marketplace; QGIS connector plugin |
+| Web: setup | Orgs, users, roles; projects and layers; form builder; capture profile editor; start a layer from existing data (SHP, GPKG, GeoJSON, KML, CSV); reference layers | File Geodatabase import; update from a newer file; export back to the source format; layer styling; basemap pack builder | Templates marketplace; QGIS connector plugin; live two-way sources (PostGIS, WFS / OGC API, ArcGIS Feature Service) |
 | Web: data | Live map + table; record detail with photos; filters; exports (CSV, XLSX, GeoJSON, SHP, KML, GPKG) | Review workflow (approve / reject / send back); per-feature history; conflict resolution UI | Dashboards and PDF reports; public share and embed |
-| Field ops | Project assignment to users | Task assignment by area or feature; progress map | Live tracking and breadcrumbs; team messaging |
+| Field ops | Project assignment to users; assign imported features to collectors | Task assignment by area or feature; progress map | Live tracking and breadcrumbs; team messaging |
 | Platform | Auth, multi-tenant orgs, audit log | API keys, webhooks, plan limits and usage metering, billing | DHIS2, Power BI and ArcGIS connectors; SSO; data residency option |
 
 ## 6. System architecture and tech stack
@@ -144,7 +144,7 @@ Both apps talk only to the API, and both import the same schema package, so a fo
 | Layer | Choice | Why |
 | --- | --- | --- |
 | Backend API | Python, Django 5 + GeoDjango, Django Ninja (typed endpoints, OpenAPI out of the box) | Built-in auth, admin, ORM and migrations; GeoDjango for spatial; Ninja keeps the API fast and typed |
-| Multi-tenancy | Shared schema with org\_id + Postgres row-level security; a database router for orgs that bring their own database | One codebase serves cloud, BYO-storage and self-hosted clients (section 13) |
+| Multi-tenancy | Shared schema with org\_id + Postgres row-level security; a database router for orgs that bring their own database | One codebase serves cloud, BYO-storage and self-hosted clients (section 14) |
 | Database | DigitalOcean Managed PostgreSQL with PostGIS | Spatial queries, topology checks; managed backups and failover |
 | Background jobs | Celery + Redis (DigitalOcean Managed Redis/Valkey) | Exports, imports, basemap pack builds, webhooks, connector sync |
 | Vector tiles | Martin (serves MVT straight from PostGIS) | Fast web map for large layers |
@@ -173,16 +173,19 @@ Every row belongs to an organisation, and every feature carries a client-generat
 | membership | user\_id, org\_id, role | Roles: owner, admin, manager, collector, viewer |
 | project | id, org\_id, name, extent, status, settings | Groups layers, members and basemap packs |
 | project\_member | project\_id, user\_id, role, assigned\_area (geometry, optional) | Controls what a collector downloads |
-| layer | id, project\_id, name, key (project-unique slug), geometry\_type (point, line, polygon, none), style, capture\_profile (JSON), current\_schema\_version | One layer = one feature type; its attributes are its form. Geometry is always stored in EPSG:4326 |
+| layer | id, project\_id, name, key (project-unique slug), geometry\_type (point, line, polygon, none), style, capture\_profile (JSON), current\_schema\_version, role (data or reference), origin (JSON: source\_dataset\_id, source layer, source SRID, key field) | One layer = one feature type; its attributes are its form. Geometry is always stored in EPSG:4326 |
 | layer\_schema\_version | id, layer\_id, version, attributes (JSON, section 9), published\_at, published\_by | Immutable once published; features record the version they used |
 | layer\_template | id, org\_id, name, geometry\_type, attributes, capture\_profile | Save a layer (e.g. Farms) and reuse it in new projects |
-| feature | id (UUID), layer\_id, geom, attributes (JSONB), schema\_version, version, created\_by, updated\_by, device\_id, created\_at, updated\_at, deleted, status | Geometry in PostGIS (null for no-geometry layers); status = draft, submitted, approved, rejected, sent\_back |
+| feature | id (UUID), layer\_id, geom, attributes (JSONB), schema\_version, version, created\_by, updated\_by, device\_id, created\_at, updated\_at, deleted, status, field\_status, source\_fid, baseline\_geom, baseline\_attributes | Geometry in PostGIS (null for no-geometry layers); status = imported, draft, submitted, approved, rejected, sent\_back; field\_status = pending, verified, updated, not\_found, new (imported layers only, section 10) |
 | feature\_relation | from\_feature\_id, to\_feature\_id, attribute\_key | Links across layers, e.g. farm → farmer |
 | feature\_history | feature\_id, version, geom, attributes, changed\_by, changed\_at, device\_id, change\_type | Full version history and audit |
 | raw\_track | feature\_id, points with accuracy and time | The unsimplified streamed track, kept for audit |
 | vertex\_meta | feature\_id, vertex\_index, accuracy\_m, fix\_type, satellites, timestamp, source | Optional per-vertex GPS quality |
 | attachment | id (UUID), feature\_id, field\_key, type, storage\_key, size, checksum, captured\_at, lat, lon, upload\_status | Files in object storage; metadata in Postgres |
-| task | id, project\_id, assignee\_id, area/feature ref, due, status | v1 |
+| assignment | id, project\_id, layer\_id, assignee\_id, feature\_ids or area (geometry), due, status, assigned\_by | Decides which features each phone pulls; MVP for imported layers, map tools in v1 |
+| source\_dataset | id, org\_id, file\_name, format, storage\_key, size, checksum, layers (JSON: name, geometry type, count, fields, domains, SRID), uploaded\_by, uploaded\_at | The original file, kept unchanged for audit and export back |
+| import\_job | id, source\_dataset\_id, target\_layer\_id, kind (new\_layer, reference, add\_records, update), mapping (JSON), source\_srid, fixes (JSON), key\_field, status, counts (JSON), report, started\_at, finished\_at | One run of the import pipeline; update runs keep a snapshot for rollback |
+| spatial\_rule | stored in the capture profile as `validation.spatialRules` (reference layer key, predicate, buffer, action) | Checks features against reference layers on push and when a reference layer changes |
 | basemap\_pack | id, project\_id, extent, zoom\_range, format, storage\_key, size | PMTiles packs for offline use |
 | device | id, user\_id, platform, app\_version, last\_sync\_at | For sync bookkeeping and support |
 | sync\_cursor | device\_id, project\_id, last\_server\_seq | Where each device is up to |
@@ -305,7 +308,67 @@ Each layer's attributes are stored as a versioned JSON document. The admin build
 
 **Versioning:** publishing a layer's attribute changes creates a new `layer_schema_version`. Collected features keep the version they were captured with. Removed attributes stay in old data; new required attributes apply only to new captures. A **relation** attribute type (`"type": "relation", "relation": { "layer": "lyr_farmers" }`) links a feature to a feature in another layer, such as a farm to its farmer.
 
-## 10. Sync protocol
+## 10. Starting from existing data
+
+A layer can start from an existing dataset instead of an empty form. The file's features become records, its columns become attributes, and collectors verify, update or add to them in the field. The same pipeline brings in reference layers: read-only context such as forest reserves or district boundaries.
+
+**Supported sources**
+
+| Source | Import | Export back | Phase |
+| --- | --- | --- | --- |
+| Shapefile (.zip with .shp, .shx, .dbf, .prj, .cpg) | Yes | Yes | MVP |
+| GeoPackage (.gpkg), any number of layers | Yes | Yes | MVP |
+| GeoJSON, KML / KMZ, CSV with coordinate columns, FlatGeobuf | Yes | Yes | MVP |
+| File Geodatabase (zipped .gdb), including coded-value domains | Yes (GDAL OpenFileGDB) | Yes (GDAL 3.6 or later) | v1 |
+| PostGIS table or view, WFS / OGC API Features, ArcGIS Feature Service | Scheduled read | Two-way, opt-in per source | v2 |
+
+**Import pipeline** (one background job per upload, status visible on the web)
+
+1. **Upload.** Chunked and resumable, up to 2 GB. The original file is stored unchanged in object storage as a `source_dataset`.
+2. **Inspect.** A Celery worker opens the file with GDAL (pyogrio) and lists layers, geometry type, feature count, fields, domains and coordinate system.
+3. **Choose layers.** Each chosen source layer becomes one layer in the project. A source layer with mixed geometry types is split by type.
+4. **Coordinate system.** Read from the .prj file, the GeoPackage spatial reference table or the feature class. If it is missing, the user must pick one; PreciseCapture suggests a system from the coordinate ranges (Ghana Metre Grid EPSG:25000, Ghana National Grid EPSG:2136, UTM 30N EPSG:32630). PROJ transforms everything to EPSG:4326 for storage; the source SRID is kept on the layer for exports.
+5. **Geometry checks.** Each issue needs a decision before loading: invalid geometry (repair with `ST_MakeValid` or skip), multipart features (keep or split), Z/M values (drop or keep as an attribute), empty geometry (skip or import without geometry), duplicate key values (flag or keep first). Ring orientation, closing vertices and duplicate vertices are fixed silently.
+6. **Field mapping.** Columns become attributes: string → text, integer or real → number, date → date, coded-value domains → single-choice lists. Short shapefile names get readable labels. Each attribute is set to **edit**, **read-only** (`readonly: true`) or **hidden** (`hiddenOnDevice: true`) on phones, and keeps its original column name in `sourceName` for export.
+7. **Key field.** The user picks a unique column (for example `FARM_ID`); the job reports how many values are unique. The source FID is always kept as `source_fid`.
+8. **Load.** COPY into a staging table, then insert features with status `imported`, a copy of the original geometry and attributes as the baseline, and the layer's schema version. Vector tiles are built and the import is written to the audit log.
+
+**Field status of imported features**
+
+Imported features carry a field status next to the review status. Review (submitted, approved, sent back) starts once a collector submits a visit.
+
+| Field status | Set when | Exported `pc_status` |
+| --- | --- | --- |
+| Not visited | On import | `pending` |
+| Verified | Collector confirms boundary and attributes match | `verified` |
+| Updated | Geometry or an editable attribute changed | `updated` |
+| Not found | Collector cannot find it; reason and photo required | `not_found` |
+| New | Added in the field, not in the source file | `new` |
+
+**Rules on the phone**
+
+- Collectors download only the features assigned to them, or those inside their assigned area, as part of the project bundle.
+- Read-only attributes are shown but locked. Hidden attributes never reach the device.
+- Boundaries can be reshaped by moving vertices or re-walked with streaming capture. The original stays as `baseline_geom` and the web shows both.
+- Imported features are never deleted in the field. They are marked Not found, and a reviewer confirms.
+- The import can add three verification attributes: `pc_field_status`, `pc_reason` (required when not found) and `pc_photo`.
+
+**Assignments**
+
+A manager selects features on the web map (click, select unassigned in view, or by filter) and assigns them to a collector with a due date. Each assignment is an `assignment` row. Assigned features enter that collector's next pull, and the phone shows them as a task list sorted by distance with a Navigate button. Progress per collector is features visited over features assigned. Reassigned features move on the next sync; edits already made on the old device still upload and follow the normal conflict rules.
+
+**Reference layers**
+
+A reference layer is a layer with `role = reference`. It is imported the same way but has no form, is never pushed from phones, and cannot be edited in the field. It is shown on the web map and phones (offline), can be a snapping target, and can drive a spatial rule in the capture profile (`validation.spatialRules`): when a feature intersects it, optionally within a buffer, the rule flags for review, warns the collector, or blocks saving. For EUDR, flag farms that intersect forest reserves or protected areas. Existing features are checked when the reference layer is added, and new ones on every push.
+
+**Round trip and updates**
+
+- **Export back to the source format** writes the original layer name, column names, key values and coordinate system, so the result drops into the client's GIS. Options: all features or changes only, plus change columns `pc_status`, `pc_edited_by`, `pc_edited_at` and `pc_source_fid`.
+- **Update from a newer file** matches on the key field and previews counts of new, changed, unchanged and missing features before anything changes. Missing features are flagged, never deleted. When a feature changed in both the file and the field, the admin chooses: keep the field edit, take the file version, or send it to Conflicts. A snapshot is taken first so the update can be rolled back.
+
+**Phasing.** MVP: shapefile, GeoPackage, GeoJSON, KML and CSV into a new layer; reference layers with the flag rule; assigning selected features to a collector. v1: File Geodatabase, export back with change columns, update from a newer file, map-based assignment with due dates and progress, warn and block rules. v2: live two-way sources.
+
+## 11. Sync protocol
 
 Sync is push-then-pull over a server sequence number: the device pushes its outbox, then pulls every change since its last cursor. Records use client UUIDs and optimistic versioning, so the phone never waits for the server to assign IDs.
 
@@ -352,7 +415,7 @@ Sync is push-then-pull over a server sequence number: the device pushes its outb
 
 **Low-bandwidth handling:** gzip all payloads, resize photos on the device before upload (configurable, default 1920 px), allow "sync on Wi-Fi only" for attachments, and let changes sync before photos so the map updates first.
 
-## 11. API outline
+## 12. API outline
 
 REST over HTTPS, JSON, versioned under `/api/v1`, documented as an OpenAPI 3.1 spec generated by Django Ninja. Ben publishes the spec and a mock server first, so Selorm can build against it from day one. Mobile uses the endpoints marked ✓.
 
@@ -369,19 +432,20 @@ REST over HTTPS, JSON, versioned under `/api/v1`, documented as an OpenAPI 3.1 s
 | Layer schemas | `GET/PUT /layers/{id}/schema`, `POST /layers/{id}/schema/publish`, `GET /layers/{id}/schema/versions/{v}` | Layer attributes (the form) and their versions | ✓ (read) |
 | Features | `GET /layers/{id}/features` (bbox, filters, paging), `GET/PATCH /features/{id}`, `GET /features/{id}/history` | Web table/map and detail |  |
 | Vector tiles | `GET /projects/{id}/tiles/{layer}/{z}/{x}/{y}.mvt` (proxied to Martin after auth) | Fast web map rendering of large layers |  |
-| Sync | `POST /sync/push`, `GET /sync/pull` | Section 10 | ✓ |
+| Sync | `POST /sync/push`, `GET /sync/pull` | Section 11 | ✓ |
 | Attachments | `POST /attachments` (returns presigned multipart part URLs), `POST /attachments/{id}/complete`, `GET /attachments/{id}` | Resumable media upload and signed download | ✓ |
 | Basemaps | `POST /projects/{id}/basemap-packs`, `GET /basemap-packs/{id}/download` | Build and download offline packs | ✓ (download) |
 | Review | `POST /features/{id}/review` | Approve, reject, send back with a note |  |
 | Conflicts | `GET /conflicts`, `POST /conflicts/{id}/resolve` | Conflict resolution UI |  |
-| Tasks | `GET/POST/PATCH /tasks` | v1 field task assignment | ✓ |
-| Exports | `POST /exports`, `GET /exports/{id}` | Async export jobs (CSV, XLSX, GeoJSON, SHP, KML, GPKG) |  |
-| Imports | `POST /imports` | Data upload and XLSForm import |  |
+| Assignments | `GET/POST/PATCH /assignments`, `POST /assignments/bulk` | Assign features or areas to collectors; decides what each phone pulls | ✓ |
+| Exports | `POST /exports`, `GET /exports/{id}` | Async export jobs (CSV, XLSX, GeoJSON, SHP, KML, GPKG, EUDR GeoJSON), including export back to an imported layer's source format with change columns |  |
+| Imports | `POST /imports`, `GET /imports/{id}`, `POST /imports/{id}/confirm`, `POST /layers/{id}/update-preview`, `POST /layers/{id}/update-apply` | Upload a dataset, inspect it, confirm layers, coordinate system, geometry fixes and field mapping (section 10); add records to a layer; XLSForm import |  |
+| Reference layers | `GET/POST/PATCH /projects/{id}/reference-layers` | Read-only context layers; rules live in the capture profile | ✓ (read) |
 | Integrations | `/webhooks`, `/api-keys` | v1 integrations |  |
 
 **Conventions:** UUIDs for all IDs; cursor paging; ISO 8601 UTC times; GeoJSON in EPSG:4326 on the wire; errors as RFC 9457 problem JSON; idempotency via `change_id` on sync and an `Idempotency-Key` header on other writes.
 
-## 12. Security, multi-tenancy and compliance
+## 13. Security, multi-tenancy and compliance
 
 Tenant isolation is enforced in the database, not only in application code, because one leaked query across clients would end the business.
 
@@ -395,7 +459,7 @@ Tenant isolation is enforced in the database, not only in application code, beca
 - **Data residency:** default cloud region plus an option to deploy in-country or on a client's own server for government contracts. Keep the stack container-based so this is a deployment choice, not a rewrite.
 - **Commercial controls:** plan limits (users, projects, storage, features/month) enforced server-side; usage metering feeds billing.
 
-## 13. Bring your own infrastructure
+## 14. Bring your own infrastructure
 
 Any institution can keep its data on its own servers, at one of three levels, using the same mobile app from the app stores. This is a core selling point across Africa, where governments, ministries and large NGOs often require data to stay in-country under laws such as Ghana's Act 843, Nigeria's NDPA, Kenya's Data Protection Act and South Africa's POPIA.
 
@@ -419,7 +483,7 @@ Any institution can keep its data on its own servers, at one of three levels, us
 - Connectors report health (last success, backlog, errors) on the web admin and alert the client when their server is unreachable; data waits in a queue and is never dropped.
 - The API is versioned and backward-compatible, so a self-hosted server a version behind still works with the latest app.
 
-## 14. Delivery plan and open decisions
+## 15. Delivery plan and open decisions
 
 > _Diagram (delivery roadmap · 4 phases, 3 gates) — see the live spec doc for the drawing._
 
@@ -438,13 +502,16 @@ Phase 0 is the most important: once the contract is agreed, Ben builds the API a
 - [ ] Domain name and app store listings
 - [x] First pilot: farm boundary and centroid mapping
 - [ ] Pilot partner (cooperative, licensed buying company or exporter) and region
-- [x] Cloud: DigitalOcean; clients can bring their own infrastructure (section 13)
+- [x] Cloud: DigitalOcean; clients can bring their own infrastructure (section 14)
 - [x] Background location: open source for now
 - [x] Platforms: iOS and Android both in the MVP
 - [x] Backend framework: Django + GeoDjango
 - [x] DevOps: Desmond
 - [ ] Pricing model: per user, per project, or per farm/feature volume
 - [ ] Who covers QA
+- [ ] Import limits for the MVP (proposed: 2 GB per upload, 1 million features per layer)
+- [ ] Which client systems need two-way live sources first (PostGIS, ArcGIS Feature Service or WFS)
+- [ ] Official forest reserve and protected area boundaries to load as reference layers for EUDR checks
 
 ## Sources
 

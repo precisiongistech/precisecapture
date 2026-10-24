@@ -70,7 +70,8 @@ Django apps under `apps/api/precisecapture/`:
 | `features` | `Feature`, `FeatureHistory`, `FeatureRelation`, `RawTrack`, `VertexMeta`, review workflow, spatial computations |
 | `sync` | `ChangeLog`, `ProjectSyncState`, `AppliedChange`, `SyncCursor`, `Conflict`, push/pull services |
 | `attachments` | `Attachment`, presigned multipart uploads, signed downloads |
-| `exports` | Celery export jobs (CSV, XLSX, GeoJSON, EUDR GeoJSON, SHP, KML, GPKG) |
+| `exports` | Celery export jobs (CSV, XLSX, GeoJSON, EUDR GeoJSON, SHP, KML, GPKG), export back to an imported layer's source format |
+| `imports` | SourceDataset, ImportJob, GDAL inspect/load tasks, update-from-file, Assignment |
 | `integrations` | API keys, webhooks, connectors (later milestones) |
 
 ## Commands (create these in M0 and keep them working)
@@ -137,6 +138,8 @@ make schema-test     # validate examples against JSON Schemas; run expression te
 - **Layer:** one feature type with a geometry type (`point`, `line`, `polygon`, `none`) and attributes. It has a UUID (used in API paths and sync) and a project-unique `key` slug (used for references inside layer schemas and capture profiles).
 - **Layer schema:** the layer's attribute list. It is also the form the collector fills in. Versioned (`LayerSchemaVersion`).
 - **Capture profile:** per-layer JSON rules for how geometry is captured (streaming interval, auto-close, GPS limits, snapping, topology). Resolves org default → project → layer → collector toggle (unless `locked`).
+- **Imported layer:** a layer started from an existing dataset (shapefile, GeoPackage, geodatabase). Features keep `source_fid` and a baseline; collectors verify, update or mark them not found, never delete.
+- **Reference layer:** a read-only layer (`role=reference`) used for display, snapping and spatial rules (e.g. farms inside forest reserves).
 - **Project bundle:** everything a phone downloads to work offline for a project.
 - **Outbox:** the phone's queue of local changes awaiting sync.
 - **server_seq:** the per-project, gap-free, commit-ordered sequence used for pull cursors.

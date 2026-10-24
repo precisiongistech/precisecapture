@@ -110,6 +110,14 @@ export type Field = {
    * Marks personal data for retention, export masking and field-level permissions.
    */
   personalData?: boolean;
+  /**
+   * Original column name when the layer was started from an imported dataset (e.g. 'OWNR_NM'). Used to write column names back on export to the source format.
+   */
+  sourceName?: string;
+  /**
+   * Keep the value on the server and in exports but never send it to phones. Imported columns marked 'hidden' use this; 'read-only' columns use readonly: true.
+   */
+  hiddenOnDevice?: boolean;
 } & {
   key: string;
   type:
@@ -201,6 +209,14 @@ export type Field = {
    * Marks personal data for retention, export masking and field-level permissions.
    */
   personalData?: boolean;
+  /**
+   * Original column name when the layer was started from an imported dataset (e.g. 'OWNR_NM'). Used to write column names back on export to the source format.
+   */
+  sourceName?: string;
+  /**
+   * Keep the value on the server and in exports but never send it to phones. Imported columns marked 'hidden' use this; 'read-only' columns use readonly: true.
+   */
+  hiddenOnDevice?: boolean;
 } & {
   key: string;
   type:
@@ -292,6 +308,14 @@ export type Field = {
    * Marks personal data for retention, export masking and field-level permissions.
    */
   personalData?: boolean;
+  /**
+   * Original column name when the layer was started from an imported dataset (e.g. 'OWNR_NM'). Used to write column names back on export to the source format.
+   */
+  sourceName?: string;
+  /**
+   * Keep the value on the server and in exports but never send it to phones. Imported columns marked 'hidden' use this; 'read-only' columns use readonly: true.
+   */
+  hiddenOnDevice?: boolean;
 } & {
   key: string;
   type:
@@ -383,6 +407,14 @@ export type Field = {
    * Marks personal data for retention, export masking and field-level permissions.
    */
   personalData?: boolean;
+  /**
+   * Original column name when the layer was started from an imported dataset (e.g. 'OWNR_NM'). Used to write column names back on export to the source format.
+   */
+  sourceName?: string;
+  /**
+   * Keep the value on the server and in exports but never send it to phones. Imported columns marked 'hidden' use this; 'read-only' columns use readonly: true.
+   */
+  hiddenOnDevice?: boolean;
 };
 /**
  * Expression in the PreciseCapture expression language (packages/schema/expressions.md).
@@ -500,6 +532,23 @@ export interface CaptureProfile {
     minAreaSqm?: number | null;
     maxAreaSqm?: number | null;
     duplicateWarningMeters?: number | null;
+    /**
+     * Checks against reference layers (layers with role 'reference'). Run on the device when the reference layer is in the bundle, and always on the server at push and when a reference layer changes.
+     */
+    spatialRules?: {
+      /**
+       * Key of a reference layer in the same project.
+       */
+      referenceLayer: string;
+      predicate?: "intersects" | "within" | "outside";
+      bufferMeters?: number;
+      /**
+       * Ignore slivers smaller than this.
+       */
+      minOverlapSqm?: number;
+      action: "flag" | "warn" | "block";
+      message?: string;
+    }[];
   };
   centroid?: {
     method?: "centroid" | "point_on_surface";

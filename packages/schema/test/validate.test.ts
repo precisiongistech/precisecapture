@@ -67,6 +67,15 @@ describe("capture profile", () => {
   it("partial profiles (org/project level) are valid", () => {
     expect(validateCaptureProfile({ gps: { averaging: { enabled: true, locked: true } } }).ok).toBe(true);
   });
+  it("spatialRules entries need a referenceLayer and an action", () => {
+    const ok = validateCaptureProfile({
+      validation: { spatialRules: [{ referenceLayer: "lyr_forest_reserves", action: "flag", bufferMeters: 50 }] },
+    });
+    expect(ok.ok).toBe(true);
+    const r = validateCaptureProfile({ validation: { spatialRules: [{ referenceLayer: "lyr_forest_reserves" }] } });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors[0]).toMatchObject({ field: "validation.spatialRules.0.action", code: "required" });
+  });
   it("stream interval bounds", () => {
     const r = validateCaptureProfile({ stream: { intervalMeters: 0.5 } });
     expect(r.ok).toBe(false);

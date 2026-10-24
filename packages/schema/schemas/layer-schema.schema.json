@@ -272,6 +272,16 @@
         "personalData": {
           "type": "boolean",
           "description": "Marks personal data for retention, export masking and field-level permissions."
+        },
+        "sourceName": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Original column name when the layer was started from an imported dataset (e.g. 'OWNR_NM'). Used to write column names back on export to the source format."
+        },
+        "hiddenOnDevice": {
+          "type": "boolean",
+          "default": false,
+          "description": "Keep the value on the server and in exports but never send it to phones. Imported columns marked 'hidden' use this; 'read-only' columns use readonly: true."
         }
       },
       "allOf": [

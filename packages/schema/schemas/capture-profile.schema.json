@@ -269,6 +269,55 @@
             "null"
           ],
           "minimum": 0
+        },
+        "spatialRules": {
+          "type": "array",
+          "description": "Checks against reference layers (layers with role 'reference'). Run on the device when the reference layer is in the bundle, and always on the server at push and when a reference layer changes.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "referenceLayer",
+              "action"
+            ],
+            "properties": {
+              "referenceLayer": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]{0,62}$",
+                "description": "Key of a reference layer in the same project."
+              },
+              "predicate": {
+                "enum": [
+                  "intersects",
+                  "within",
+                  "outside"
+                ],
+                "default": "intersects"
+              },
+              "bufferMeters": {
+                "type": "number",
+                "minimum": 0,
+                "default": 0
+              },
+              "minOverlapSqm": {
+                "type": "number",
+                "minimum": 0,
+                "default": 1,
+                "description": "Ignore slivers smaller than this."
+              },
+              "action": {
+                "enum": [
+                  "flag",
+                  "warn",
+                  "block"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 200
+              }
+            }
+          }
         }
       }
     },

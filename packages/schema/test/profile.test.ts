@@ -19,6 +19,7 @@ interface SemanticsCase {
   profile: Record<string, unknown>;
   geometryType?: SemanticsContext["geometryType"];
   layerKeys?: string[];
+  referenceLayerKeys?: string[];
   expectErrors: Array<{ field: string; code: string }>;
 }
 
@@ -42,7 +43,11 @@ describe("resolveCaptureProfile vectors", () => {
 describe("validateCaptureProfileSemantics vectors", () => {
   for (const c of load<{ cases: SemanticsCase[] }>("capture-profile-semantics.json").cases) {
     it(c.name, () => {
-      const issues = validateCaptureProfileSemantics(c.profile, { geometryType: c.geometryType, layerKeys: c.layerKeys });
+      const issues = validateCaptureProfileSemantics(c.profile, {
+        geometryType: c.geometryType,
+        layerKeys: c.layerKeys,
+        referenceLayerKeys: c.referenceLayerKeys,
+      });
       const got = issues.map((i) => `${i.field}|${i.code}`).sort();
       const want = c.expectErrors.map((e) => `${e.field}|${e.code}`).sort();
       expect(got).toEqual(want);

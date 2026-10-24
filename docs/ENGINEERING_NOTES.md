@@ -57,7 +57,7 @@ Write a helper so each app's migration adds the policy in one line, e.g. `enable
 
 | Tenant-scoped (own `org_id` column + RLS) | Global (application permissions only) |
 | --- | --- |
-| Projects and setup: `project`, `project_member`, `layer`, `layer_schema_version`, `layer_template`, `basemap_pack`, `task` | `user` |
+| Projects and setup: `project`, `project_member`, `layer`, `layer_schema_version`, `layer_template`, `basemap_pack`, `assignment`, `source_dataset`, `import_job` | `user` |
 | Feature data: `feature`, `feature_history`, `feature_relation`, `raw_track`, `vertex_meta`, `attachment`, `review` | `organisation` |
 | Sync: `project_sync_state`, `change_log`, `applied_change`, `sync_cursor`, `conflict` | `membership` |
 | Integrations and jobs: `export_job`, `webhook`, `api_key`, `connector` | `device`, `refresh_token` (owned by the user, scoped by user id) |

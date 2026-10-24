@@ -4,6 +4,8 @@ import type { ValidationIssue } from "../validate.js";
 export interface SemanticsContext {
   geometryType?: "point" | "line" | "polygon" | "none" | null;
   layerKeys?: readonly string[] | null;
+  /** Keys of the project's layers with role 'reference'; enables the `not_reference` rule. */
+  referenceLayerKeys?: readonly string[] | null;
 }
 
 type Obj = Record<string, unknown>;
@@ -79,6 +81,20 @@ export function validateCaptureProfileSemantics(
 
   const validation = profile.validation;
   if (isObj(validation)) {
+    const rules = validation.spatialRules;
+    if (Array.isArray(rules) && (context.layerKeys || context.referenceLayerKeys)) {
+      const known = new Set([...(context.layerKeys ?? []), ...(context.referenceLayerKeys ?? [])]);
+      const reference = context.referenceLayerKeys ? new Set(context.referenceLayerKeys) : null;
+      rules.forEach((rule, i) => {
+        if (!isObj(rule) || typeof rule.referenceLayer !== "string") return;
+        const field = `validation.spatialRules.${i}.referenceLayer`;
+        if (!known.has(rule.referenceLayer)) {
+          push(field, "unknown_layer", `Layer '${rule.referenceLayer}' does not exist in this project`);
+        } else if (reference && !reference.has(rule.referenceLayer)) {
+          push(field, "not_reference", `Layer '${rule.referenceLayer}' is not a reference layer`);
+        }
+      });
+    }
     const min = validation.minAreaSqm;
     const max = validation.maxAreaSqm;
     if (typeof min === "number" && typeof max === "number" && max < min) {

@@ -27,6 +27,7 @@ def test_semantics_vector(case):
         case["profile"],
         geometry_type=case.get("geometryType"),
         layer_keys=case.get("layerKeys"),
+        reference_layer_keys=case.get("referenceLayerKeys"),
     )
     assert {(i.field, i.code) for i in issues} == {
         (e["field"], e["code"]) for e in case["expectErrors"]
