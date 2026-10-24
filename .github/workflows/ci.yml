@@ -144,9 +144,11 @@ jobs:
           DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
           PUBLIC_BASE_URL: http://localhost:8000
         run: |
-          uv run python manage.py runserver 127.0.0.1:8000 > "$RUNNER_TEMP/api.log" 2>&1 &
+          uv run python manage.py runserver --noreload 127.0.0.1:8000 > "$RUNNER_TEMP/api.log" 2>&1 &
+          API_PID=$!
+          trap 'kill $API_PID 2>/dev/null || true; wait $API_PID 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/health >/dev/null && break; sleep 1; done
-          cd ../web && pnpm exec playwright test --reporter=line || { tail -50 "$RUNNER_TEMP/api.log"; exit 1; }
+          (cd ../web && pnpm exec playwright test --reporter=line) || { tail -50 "$RUNNER_TEMP/api.log"; exit 1; }
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
