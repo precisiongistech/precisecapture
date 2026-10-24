@@ -3,6 +3,17 @@
 `contract/openapi.json` is the contract with the mobile app. Each entry lists what the phone can
 rely on; breaking changes appear under **BREAKING CHANGE** and are announced to Selorm.
 
+## v0.2.0 (2026-10-24)
+
+Milestone M7: attachments are implemented (no longer 501). Additive only.
+
+- `createAttachment` now returns real presigned part URLs; re-posting the same `id` resumes.
+- New `resumeAttachmentUpload` (`GET /attachments/{id}/upload`): fresh URLs for missing parts.
+- `completeAttachment` verifies size and SHA-256 (422 `mismatch` and the object is removed).
+- `getAttachment` adds `failure_reason`, `thumbnail_url`, EXIF fields in `metadata`.
+- New `listFeatureAttachments` (`GET /features/{id}/attachments`) and
+  `missingAttachmentsReport` (`GET /projects/{id}/reports/missing-attachments`, managers).
+
 ## v0.1.1 (2026-10-24)
 
 Milestone M6. No shape changes: `syncPush` and `syncPull` are now implemented (no longer 501).
