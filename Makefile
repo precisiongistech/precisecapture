@@ -43,7 +43,8 @@ api-migrate: ## Run migrations as pc_owner on the `migrations` alias
 api-makemigrations: ## Create migrations for changed models
 	$(API) python manage.py makemigrations
 
-api-run: ## Dev server on :8000  (docs at /api/v1/docs)
+api-run: ## Dev server on :8000  (docs at http://localhost:8000/api/v1/docs)
+	@echo "API docs: http://localhost:8000/api/v1/docs"
 	$(API) python manage.py runserver 0.0.0.0:8000
 
 api-worker: ## Celery worker
