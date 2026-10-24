@@ -191,7 +191,9 @@ export class PreciseCaptureClient {
   private buildUrl(path: string, opts: RequestOptions<unknown>): string {
     let p = path;
     for (const [k, v] of Object.entries((opts.path ?? {}) as Record<string, unknown>)) p = p.replace(`{${k}}`, encodeURIComponent(String(v)));
-    const url = new URL(this.baseUrl + p);
+    // A relative base ("" or "/api-proxy") is allowed in browsers: resolve against the page origin.
+    const origin = (globalThis as { location?: { href: string } }).location?.href ?? "http://localhost";
+    const url = new URL(this.baseUrl + p, origin);
     for (const [k, v] of Object.entries((opts.query ?? {}) as Record<string, unknown>)) {
       if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
     }
