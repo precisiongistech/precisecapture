@@ -8,7 +8,7 @@ This pack contains everything Claude Code needs to start building the PreciseCap
 | --- | --- |
 | `CLAUDE.md` | Claude Code reads this automatically every session: product, stack, repo layout, rules, conventions |
 | `docs/SPEC.md` | The full product and technical spec (exported from our shared doc) |
-| `docs/BUILD_PLAN.md` | 13 milestones (M0–M12) with tasks and acceptance criteria |
+| `docs/BUILD_PLAN.md` | 14 milestones (M0–M13) with tasks and acceptance criteria |
 | `docs/ENGINEERING_NOTES.md` | How to build the hard parts: tenant isolation (RLS), sync ordering, conflicts, geometry, attachments, auth |
 | `docs/DECISIONS.md` | Every decision made so far, so Claude Code doesn't reopen them |
 | `packages/schema/` | The shared contract with Selorm: JSON Schemas for layer attributes and capture profiles, pilot examples (Farmers, Farms), expression language spec and test vectors |
@@ -56,7 +56,7 @@ claude
 2. Read its summary, its list of gaps and contradictions, and its M0 plan. Answer its questions, then say **"go"**.
 3. When M0 is done, check the acceptance criteria yourself. Run `make dev-up`, `make api-run`, then open `http://localhost:8000/api/v1/docs`.
 
-## Step 4: The milestone loop (repeat for M1 to M12)
+## Step 4: The milestone loop (repeat for M1 to M13)
 
 1. Start a fresh Claude Code session. In plan mode, paste `prompts/01-start-milestone.md` with the milestone number.
 2. Review the plan, adjust it if needed, then say **"go"**.
@@ -78,7 +78,7 @@ claude
 
 **Desmond (DevOps)**
 
-- Involve him at M0 (CI) and M12 (DigitalOcean deploy, backups, staging).
+- Involve him at M0 (CI) and M13 (DigitalOcean deploy, backups, staging).
 - Give him `docs/ENGINEERING_NOTES.md §1`: the database roles and RLS setup have to be replicated on DigitalOcean Managed Postgres.
 
 ## Tips for working with Claude Code

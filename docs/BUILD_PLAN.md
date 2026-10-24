@@ -18,7 +18,8 @@ Work through the milestones in order. Each one should be a branch and a pull req
 | M9 | Web data: map, table, detail, review, conflicts | Managers can review |
 | M10 | Exports and QA (EUDR) | Pilot deliverables |
 | M11 | Offline basemap packs | 📱 Offline maps |
-| M12 | Pilot hardening and deploy to DigitalOcean (with Desmond) | Pilot go-live |
+| M12 | Start from existing data, reference layers, assignments | 📱 Verification of existing farm surveys; EUDR reserve checks |
+| M13 | Pilot hardening and deploy to DigitalOcean (with Desmond) | Pilot go-live |
 | Later | Connect integrations (webhooks, API keys, DB connector), BYO storage, self-hosted package, billing | v1/v2 |
 
 ---
@@ -351,7 +352,36 @@ Work through the milestones in order. Each one should be a branch and a pull req
 
 ---
 
-## M12: Pilot hardening and deploy (with Desmond)
+## M12: Start from existing data, reference layers, assignments 📱
+
+Spec: `docs/SPEC.md` section 10. Contract: `hiddenOnDevice` and `sourceName` on layer schema fields, `validation.spatialRules` in the capture profile (both optional, backward compatible).
+
+**Tasks**
+
+1. `imports` Django app: `SourceDataset` (original file in object storage, never modified) and `ImportJob` (kind: `new_layer`, `reference`, `add_records`, `update`). Chunked upload reusing the attachments multipart flow.
+2. Inspect task (Celery + GDAL via `pyogrio`): layers, geometry types, counts, fields, coded-value domains, SRID. Report stored on the job.
+3. Confirm step (`POST /imports/{id}/confirm`): chosen layers, source SRID (required when missing), geometry fixes (repair/skip, keep/split multipart, drop Z), field mapping (type, label, edit/read-only/hidden, `sourceName`), key field. Reject a mapping whose key field is not unique unless "flag duplicates" was chosen.
+4. Load: reproject with PROJ to EPSG:4326, `ST_MakeValid` where chosen, COPY into a staging table, insert features with `status=imported`, `field_status=pending`, `source_fid`, `baseline_geom`, `baseline_attributes`. Publish schema version 1. Audit entry.
+5. `Layer.role` (`data` or `reference`) and `Layer.origin`. Reference layers: no form, excluded from push, included in the bundle as read-only GeoJSON or PMTiles depending on size.
+6. Spatial rules: evaluate `validation.spatialRules` on push and as a backfill task when a reference layer is added or changed; write QA flags (`in_reference`) with overlap area.
+7. `Assignment` model and endpoints (`/assignments`, `/assignments/bulk`). The pull for a collector includes only assigned features (or features in `assigned_area`) for imported layers.
+8. Field status transitions on push: `verified` when submitted unchanged, `updated` when geometry or an editable attribute changed, `not_found` with reason and photo, `new` for features created in the field. Never allow deletes of imported features from devices.
+9. Exports: "back to source format" (original layer name, `sourceName` columns, source SRID, key values) with optional changes-only and `pc_*` change columns. Update-from-file: preview (new / changed / unchanged / missing / changed in both) then apply with a snapshot and rollback.
+10. Web UI: start-from-existing-data wizard (source, layers, coordinates, geometry checks, fields, review), reference layers list, assignments map (select, assign, progress), field-status filters and baseline-vs-current view in the record drawer. Follow the prototype.
+
+**Acceptance criteria**
+
+- [ ] A shapefile without a .prj, a GeoPackage in Ghana Metre Grid (EPSG:25000) and a GeoJSON all import; sample coordinates match `pyproj` to within 1 cm.
+- [ ] A bow-tie polygon is repaired or skipped as chosen; nothing in the stored original changes.
+- [ ] Coded-value domains become choice lists; hidden fields never appear in a collector's bundle or pull.
+- [ ] A collector pulls only assigned imported features; reassignment moves them on the next pull.
+- [ ] A device cannot delete an imported feature (rejected per change, not per batch).
+- [ ] Adding a reference layer flags existing intersecting features; a new push inside it is flagged, warned or blocked per the rule.
+- [ ] Export back to GeoPackage reopens in QGIS with the original column names, SRID and key values; changes-only includes exactly updated, not-found and new features.
+- [ ] Update-from-file preview counts are correct on a fixture, apply is idempotent, and rollback restores the snapshot.
+- [ ] Isolation tests for every new tenant table.
+
+## M13: Pilot hardening and deploy (with Desmond)
 
 **Tasks**
 
@@ -372,7 +402,7 @@ Work through the milestones in order. Each one should be a branch and a pull req
 - [ ] The staging deploy is reproducible from CI.
 - [ ] The restore drill is done and documented.
 - [ ] The load test meets targets.
-- [ ] Every acceptance criterion from M0 to M11 still passes.
+- [ ] Every acceptance criterion from M0 to M12 still passes.
 
 ---
 
@@ -381,6 +411,7 @@ Work through the milestones in order. Each one should be a branch and a pull req
 - **Connect:** API keys, webhooks (signed and retried), scheduled exports to a client's S3/SFTP, and a "sync to your PostGIS" connector with health monitoring.
 - **Bring your own storage:** per-org database router and storage backend; encrypted DSNs; migration tooling for client databases.
 - **Self-hosted package:** Docker Compose and Helm chart, licence key, RS256 JWT, an update channel.
-- **Tasks and field ops:** task assignment by area or feature, progress map, live tracking.
+- **Field ops:** assignment by drawn area, live tracking and breadcrumbs.
+- **Live sources:** File Geodatabase write-back hardening, scheduled two-way sync with PostGIS, WFS / OGC API Features and ArcGIS Feature Services.
 - **Billing:** plans, usage metering, mobile money payments.
 - **XLSForm import, DHIS2 connector, GhanaPostGPS lookups.**
