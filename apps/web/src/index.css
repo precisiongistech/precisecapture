@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+@theme {
+  --color-brand-50: #eefbf3;
+  --color-brand-100: #d6f5e2;
+  --color-brand-500: #1f9d55;
+  --color-brand-600: #187d44;
+  --color-brand-700: #136236;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-neutral-50 text-neutral-900 antialiased;
+}

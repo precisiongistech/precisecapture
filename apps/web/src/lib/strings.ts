@@ -1,0 +1,35 @@
+/** All user-facing strings live here so a translation layer can follow (M8 default: English). */
+export const t = {
+  appName: "PreciseCapture",
+  login: {
+    title: "Sign in",
+    identifier: "Email or phone number",
+    password: "Password",
+    submit: "Sign in",
+    useOtp: "Send me a one-time code instead",
+    usePassword: "Use my password instead",
+    otpSent: "If an account exists for this address, a code has been sent.",
+    code: "6-digit code",
+    verify: "Verify code",
+    requestCode: "Send code",
+    failed: "Sign-in failed",
+  },
+  nav: {
+    projects: "Projects",
+    data: "Data",
+    members: "Members",
+    settings: "Settings",
+    signOut: "Sign out",
+  },
+  common: {
+    save: "Save",
+    cancel: "Cancel",
+    create: "Create",
+    delete: "Delete",
+    loading: "Loading…",
+    error: "Something went wrong",
+    retry: "Try again",
+    noOrg: "You are not a member of any organisation yet.",
+    createOrg: "Create an organisation",
+  },
+} as const;
