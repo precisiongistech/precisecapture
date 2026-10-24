@@ -1,6 +1,7 @@
 """The versioned Django Ninja API, mounted at /api/v1/."""
 
 from precisecapture.accounts.api import auth_router, devices_router, me_router
+from precisecapture.attachments.api import feature_attachments_router, reports_router
 from precisecapture.attachments.api import router as attachments_router
 from precisecapture.common.api import router as common_router
 from precisecapture.common.errors import register_exception_handlers
@@ -39,3 +40,5 @@ api.add_router("/layer-templates", templates_router)
 api.add_router("/sync", sync_router)
 api.add_router("/conflicts", conflicts_router)
 api.add_router("/attachments", attachments_router)
+api.add_router("/features", feature_attachments_router)
+api.add_router("/projects", reports_router)

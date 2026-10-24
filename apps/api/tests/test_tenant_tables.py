@@ -59,6 +59,9 @@ TENANT_FACTORIES: dict[str, Callable[[Any], Any]] = {
     ),
     "sync.SyncCursor": lambda org: factories.SyncCursorFactory(org=org, project=_project(org)),
     "sync.Conflict": lambda org: factories.ConflictFactory(org=org, feature=_feature(org)),
+    "attachments.Attachment": lambda org: factories.AttachmentFactory(
+        org=org, feature=_feature(org)
+    ),
 }
 
 TENANT_MODELS = sorted(

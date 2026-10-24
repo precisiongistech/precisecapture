@@ -6,6 +6,7 @@ import factory
 from factory.django import DjangoModelFactory
 
 from precisecapture.accounts.models import Device, User
+from precisecapture.attachments.models import Attachment
 from precisecapture.features.models import (
     Feature,
     FeatureHistory,
@@ -237,3 +238,22 @@ class ConflictFactory(DjangoModelFactory[Conflict]):
     server_version = 2
     local_payload = {}
     server_payload = {}
+
+
+class AttachmentFactory(DjangoModelFactory[Attachment]):
+    class Meta:
+        model = Attachment
+
+    feature = factory.SubFactory(FeatureFactory)
+    project = factory.LazyAttribute(lambda o: o.feature.project)
+    org = factory.LazyAttribute(lambda o: o.feature.org)
+    field_key = "photos"
+    content_type = "image/jpeg"
+    size = 1024
+    checksum_sha256 = "a" * 64
+    storage_key = factory.LazyAttribute(
+        lambda o: (
+            f"org/{o.feature.org_id}/project/{o.feature.project_id}/feature/{o.feature.id}/{uuid.uuid4()}.jpg"
+        )
+    )
+    part_size = 8 * 1024 * 1024

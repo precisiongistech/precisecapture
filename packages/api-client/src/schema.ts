@@ -36,7 +36,8 @@ export interface paths {
         /**
          * Create Attachment
          * @description Start a resumable upload: returns an S3 multipart upload id and presigned part URLs (8 MB
-         *     parts). The client uploads parts directly to storage. **Returns 501 until M7.**
+         *     parts, valid 1 h). Upload the parts directly to storage, then call complete. Re-posting the
+         *     same id continues an unfinished upload.
          */
         post: operations["createAttachment"];
         delete?: never;
@@ -54,7 +55,7 @@ export interface paths {
         };
         /**
          * Get Attachment
-         * @description Attachment metadata with a short-lived presigned download URL. **501 until M7.**
+         * @description Metadata plus a 15-minute presigned download URL (and thumbnail URL for images).
          */
         get: operations["getAttachment"];
         put?: never;
@@ -76,9 +77,29 @@ export interface paths {
         put?: never;
         /**
          * Complete Attachment
-         * @description Finish the multipart upload with the part ETags; size and checksum verified. 501 until M7.
+         * @description Finish the multipart upload; size and SHA-256 verified (422, object removed on mismatch).
          */
         post: operations["completeAttachment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attachments/{attachment_id}/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Resume Upload
+         * @description Resume: fresh presigned URLs for the parts storage does not have yet.
+         */
+        get: operations["resumeAttachmentUpload"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -312,6 +333,23 @@ export interface paths {
          *     Omitted keys keep their values; `attributes` replaces the whole attribute set.
          */
         patch: operations["updateFeature"];
+        trace?: never;
+    };
+    "/api/v1/features/{feature_id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Feature Attachments */
+        get: operations["listFeatureAttachments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/features/{feature_id}/history": {
@@ -948,6 +986,26 @@ export interface paths {
         patch: operations["updateProjectMember"];
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/reports/missing-attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Missing Attachments
+         * @description Features whose required photo/file fields have no completed upload.
+         */
+        get: operations["missingAttachmentsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/tiles/{layer_id}/{z}/{x}/{y}.mvt": {
         parameters: {
             query?: never;
@@ -1098,6 +1156,7 @@ export interface components {
          *       "content_type": "image/jpeg",
          *       "size": 2345678,
          *       "upload_status": "complete",
+         *       "failure_reason": "string",
          *       "download_url": "https://spaces.example/...?X-Amz-Signature=...",
          *       "thumbnail_url": "string",
          *       "metadata": {
@@ -1125,6 +1184,8 @@ export interface components {
              * @example https://spaces.example/...?X-Amz-Signature=...
              */
             download_url?: string | null;
+            /** Failure Reason */
+            failure_reason?: string | null;
             /**
              * Feature Id
              * Format: uuid
@@ -2604,6 +2665,33 @@ export interface components {
             user: components["schemas"]["UserOut"];
         };
         /**
+         * MissingAttachmentsOut
+         * @example {
+         *       "feature_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "layer_id": "0192f0c1-1234-7abc-8def-000000000001",
+         *       "layer_key": "string",
+         *       "missing_fields": [
+         *         "string"
+         *       ]
+         *     }
+         */
+        MissingAttachmentsOut: {
+            /**
+             * Feature Id
+             * Format: uuid
+             */
+            feature_id: string;
+            /**
+             * Layer Id
+             * Format: uuid
+             */
+            layer_id: string;
+            /** Layer Key */
+            layer_key: string;
+            /** Missing Fields */
+            missing_fields: string[];
+        };
+        /**
          * MyProjectOut
          * @example {
          *       "id": "0192f0c1-1234-7abc-8def-000000000001",
@@ -3750,6 +3838,7 @@ export type SchemaMemberOut = components['schemas']['MemberOut'];
 export type SchemaMembershipOut = components['schemas']['MembershipOut'];
 export type SchemaMemberUpdateIn = components['schemas']['MemberUpdateIn'];
 export type SchemaMeOut = components['schemas']['MeOut'];
+export type SchemaMissingAttachmentsOut = components['schemas']['MissingAttachmentsOut'];
 export type SchemaMyProjectOut = components['schemas']['MyProjectOut'];
 export type SchemaOrgCreateIn = components['schemas']['OrgCreateIn'];
 export type SchemaOrgOut = components['schemas']['OrgOut'];
@@ -3944,15 +4033,6 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not implemented yet (M6/M7) */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
         };
     };
     getAttachment: {
@@ -4034,15 +4114,6 @@ export interface operations {
             };
             /** @description Rate limited */
             429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
-            /** @description Not implemented yet (M6/M7) */
-            501: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4142,8 +4213,87 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not implemented yet (M6/M7) */
-            501: {
+        };
+    };
+    resumeAttachmentUpload: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                attachment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentUploadOut"];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5145,6 +5295,94 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FeatureOut"];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listFeatureAttachments: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                feature_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentOut"][];
                 };
             };
             /** @description Bad request (e.g. missing or malformed X-Org-Id) */
@@ -9210,6 +9448,94 @@ export interface operations {
             };
         };
     };
+    missingAttachmentsReport: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The organisation to act in; the user must be a member. */
+                "X-Org-Id": string;
+            };
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissingAttachmentsOut"][];
+                };
+            };
+            /** @description Bad request (e.g. missing or malformed X-Org-Id) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing, invalid or expired access token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not a member, or role too low */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (or not visible in this organisation) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation failed; `errors[]` lists each field */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     getLayerTile: {
         parameters: {
             query?: never;
@@ -9455,15 +9781,6 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not implemented yet (M6/M7) */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
         };
     };
     syncPush: {
@@ -9627,15 +9944,6 @@ export interface operations {
             };
             /** @description Rate limited */
             429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
-            /** @description Not implemented yet (M6/M7) */
-            501: {
                 headers: {
                     [name: string]: unknown;
                 };

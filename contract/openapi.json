@@ -6839,16 +6839,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Not implemented yet (M6/M7)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
           }
         },
         "description": "Push up to 200 outbox changes for one project (gzip accepted). One transaction per project;\nper-change results are accepted | merged | conflict | rejected | duplicate. Idempotent on\nchange_id: replaying a batch returns the stored results as `duplicate`.",
@@ -7118,16 +7108,6 @@
           },
           "429": {
             "description": "Rate limited",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "Not implemented yet (M6/M7)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7644,19 +7624,9 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Not implemented yet (M6/M7)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
           }
         },
-        "description": "Start a resumable upload: returns an S3 multipart upload id and presigned part URLs (8 MB\nparts). The client uploads parts directly to storage. **Returns 501 until M7.**",
+        "description": "Start a resumable upload: returns an S3 multipart upload id and presigned part URLs (8 MB\nparts, valid 1 h). Upload the parts directly to storage, then call complete. Re-posting the\nsame id continues an unfinished upload.",
         "tags": [
           "attachments"
         ],
@@ -7670,6 +7640,125 @@
           },
           "required": true
         },
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/attachments/{attachment_id}/upload": {
+      "get": {
+        "operationId": "resumeAttachmentUpload",
+        "summary": "Resume Upload",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attachment_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Attachment Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentUploadOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Resume: fresh presigned URLs for the parts storage does not have yet.",
+        "tags": [
+          "attachments"
+        ],
         "security": [
           {
             "TenantAuth": []
@@ -7783,19 +7872,9 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Not implemented yet (M6/M7)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
           }
         },
-        "description": "Finish the multipart upload with the part ETags; size and checksum verified. 501 until M7.",
+        "description": "Finish the multipart upload; size and SHA-256 verified (422, object removed on mismatch).",
         "tags": [
           "attachments"
         ],
@@ -7922,9 +8001,122 @@
                 }
               }
             }
+          }
+        },
+        "description": "Metadata plus a 15-minute presigned download URL (and thumbnail URL for images).",
+        "tags": [
+          "attachments"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/features/{feature_id}/attachments": {
+      "get": {
+        "operationId": "listFeatureAttachments",
+        "summary": "List Feature Attachments",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           },
-          "501": {
-            "description": "Not implemented yet (M6/M7)",
+          {
+            "in": "path",
+            "name": "feature_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Feature Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AttachmentOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7934,7 +8126,129 @@
             }
           }
         },
-        "description": "Attachment metadata with a short-lived presigned download URL. **501 until M7.**",
+        "tags": [
+          "attachments"
+        ],
+        "security": [
+          {
+            "TenantAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/reports/missing-attachments": {
+      "get": {
+        "operationId": "missingAttachmentsReport",
+        "summary": "Missing Attachments",
+        "parameters": [
+          {
+            "name": "X-Org-Id",
+            "in": "header",
+            "required": true,
+            "description": "The organisation to act in; the user must be a member.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "project_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MissingAttachmentsOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. missing or malformed X-Org-Id)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired access token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a member, or role too low",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or not visible in this organisation)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed; `errors[]` lists each field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Features whose required photo/file fields have no completed upload.",
         "tags": [
           "attachments"
         ],
@@ -12644,6 +12958,17 @@
             "title": "Upload Status",
             "type": "string"
           },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
           "download_url": {
             "anyOf": [
               {
@@ -12708,6 +13033,7 @@
           "content_type": "image/jpeg",
           "size": 2345678,
           "upload_status": "complete",
+          "failure_reason": "string",
           "download_url": "https://spaces.example/...?X-Amz-Signature=...",
           "thumbnail_url": "string",
           "metadata": {
@@ -12777,6 +13103,47 @@
         "example": {
           "part_number": 1,
           "etag": "\"d41d8cd98f00b204e9800998ecf8427e\""
+        }
+      },
+      "MissingAttachmentsOut": {
+        "properties": {
+          "feature_id": {
+            "format": "uuid",
+            "title": "Feature Id",
+            "type": "string"
+          },
+          "layer_id": {
+            "format": "uuid",
+            "title": "Layer Id",
+            "type": "string"
+          },
+          "layer_key": {
+            "title": "Layer Key",
+            "type": "string"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Fields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "feature_id",
+          "layer_id",
+          "layer_key",
+          "missing_fields"
+        ],
+        "title": "MissingAttachmentsOut",
+        "type": "object",
+        "example": {
+          "feature_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "layer_id": "0192f0c1-1234-7abc-8def-000000000001",
+          "layer_key": "string",
+          "missing_fields": [
+            "string"
+          ]
         }
       },
       "Problem": {

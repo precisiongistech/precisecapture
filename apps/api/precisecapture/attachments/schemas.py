@@ -1,4 +1,4 @@
-"""Resumable attachment uploads (ENGINEERING_NOTES.md §5). Stubs in M4, implemented in M7."""
+"""Resumable attachment uploads (ENGINEERING_NOTES.md §5)."""
 
 import uuid
 from datetime import datetime
@@ -59,6 +59,7 @@ class AttachmentOut(Schema):
     content_type: str = Field(..., examples=["image/jpeg"])
     size: int = Field(..., examples=[2_345_678])
     upload_status: str = Field(..., examples=["complete"])
+    failure_reason: str | None = None
     download_url: str | None = Field(
         None,
         description="Presigned GET, valid 15 minutes",
@@ -83,3 +84,10 @@ ATTACHMENT_UPLOAD_EXAMPLE: dict[str, Any] = {
     ],
     "expires_at": "2026-10-22T11:15:02Z",
 }
+
+
+class MissingAttachmentsOut(Schema):
+    feature_id: uuid.UUID
+    layer_id: uuid.UUID
+    layer_key: str
+    missing_fields: list[str]
