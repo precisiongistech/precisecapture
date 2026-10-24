@@ -6839,16 +6839,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Not implemented yet (M6/M7)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
           }
         },
         "description": "Push up to 200 outbox changes for one project (gzip accepted). One transaction per project;\nper-change results are accepted | merged | conflict | rejected | duplicate. Idempotent on\nchange_id: replaying a batch returns the stored results as `duplicate`.",
@@ -7118,16 +7108,6 @@
           },
           "429": {
             "description": "Rate limited",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "Not implemented yet (M6/M7)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7644,16 +7624,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Not implemented yet (M6/M7)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
           }
         },
         "description": "Start a resumable upload: returns an S3 multipart upload id and presigned part URLs (8 MB\nparts, valid 1 h). Upload the parts directly to storage, then call complete. Re-posting the\nsame id continues an unfinished upload.",
@@ -7783,16 +7753,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "Not implemented yet (M6/M7)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
           }
         },
         "description": "Resume: fresh presigned URLs for the parts storage does not have yet.",
@@ -7905,16 +7865,6 @@
           },
           "429": {
             "description": "Rate limited",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "Not implemented yet (M6/M7)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8044,16 +7994,6 @@
           },
           "429": {
             "description": "Rate limited",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "Not implemented yet (M6/M7)",
             "content": {
               "application/problem+json": {
                 "schema": {

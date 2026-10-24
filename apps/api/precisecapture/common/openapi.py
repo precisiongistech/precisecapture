@@ -127,7 +127,7 @@ def _add_problem_responses(schema: dict[str, Any]) -> None:
     problem_content = {
         "application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}
     }
-    for path, ops in schema.get("paths", {}).items():
+    for _path, ops in schema.get("paths", {}).items():
         for method, op in ops.items():
             if method not in ("get", "post", "put", "patch", "delete"):
                 continue
@@ -144,11 +144,6 @@ def _add_problem_responses(schema: dict[str, Any]) -> None:
                 params = op.setdefault("parameters", [])
                 if not any(p.get("name") == "X-Org-Id" for p in params):
                     params.insert(0, ORG_HEADER_PARAM)
-            if path.startswith("/api/v1/sync") or path.startswith("/api/v1/attachments"):
-                responses.setdefault(
-                    "501",
-                    {"description": "Not implemented yet (M6/M7)", "content": problem_content},
-                )
 
 
 def _is_tenant_operation(op: dict[str, Any]) -> bool:
