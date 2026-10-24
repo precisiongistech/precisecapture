@@ -1,4 +1,4 @@
-"""M4: stubs answer 501 problem JSON; examples match packages/schema; the contract is stable."""
+"""Contract: examples match packages/schema, the OpenAPI document is complete and committed."""
 
 import json
 from pathlib import Path
@@ -29,9 +29,10 @@ def api_client(client, people):
     return people["collector"]["api"]
 
 
-def test_stubs_return_501_problem_json(api_client: Api):
-    """Sync is real since M6 (404: example project absent here); attachments stay stubbed."""
-    assert api_client.post("/api/v1/sync/push", PUSH_REQUEST_EXAMPLE).status_code == 404
+def test_no_stubs_remain_and_unknown_ids_are_404(api_client: Api):
+    """Sync (M6) and attachments (M7) are real: unknown ids answer 404 problem JSON, never 501."""
+    r = api_client.post("/api/v1/sync/push", PUSH_REQUEST_EXAMPLE)
+    assert r.status_code == 404 and r["Content-Type"] == "application/problem+json"
     assert (
         api_client.get(
             "/api/v1/sync/pull?project=01a16990-2368-7736-9254-4cbea027a751&cursor=0"
@@ -49,25 +50,17 @@ def test_stubs_return_501_problem_json(api_client: Api):
             "checksum_sha256": "a" * 64,
         },
     )
-    assert r.status_code == 501 and r["Content-Type"] == "application/problem+json"
-    assert r.json()["type"].endswith("/not-implemented")
-    assert (
-        api_client.post(
-            "/api/v1/attachments",
-            {
-                "id": "0192f0c1-1234-7abc-8def-0000000000cc",
-                "feature_id": "0192f0c1-1234-7abc-8def-000000000001",
-                "field_key": "photos",
-                "content_type": "image/jpeg",
-                "size": 10,
-                "checksum_sha256": "a" * 64,
-            },
-        ).status_code
-        == 501
-    )
+    assert r.status_code == 404
     assert (
         api_client.get("/api/v1/attachments/0192f0c1-1234-7abc-8def-0000000000cc").status_code
-        == 501
+        == 404
+    )
+    doc = api.get_openapi_schema()
+    assert not any(
+        "501" in op.get("responses", {})
+        for ops in doc["paths"].values()
+        for m, op in ops.items()
+        if m in ("get", "post", "put", "patch", "delete")
     )
 
 
