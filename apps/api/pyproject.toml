@@ -18,6 +18,8 @@ dependencies = [
     "gunicorn>=23",
     "uvicorn>=0.34",
     "httpx>=0.28,<1",
+    "pillow>=11,<12",
+    "boto3>=1.35",
 ]
 
 [dependency-groups]
@@ -31,6 +33,8 @@ dev = [
     "pre-commit>=4",
     "celery-types>=0.23",
     "types-jsonschema>=4.23",
+    "requests>=2.32",
+    "types-requests>=2.33.0.20261006",
 ]
 
 [tool.uv]
@@ -60,7 +64,7 @@ warn_unreachable = true
 exclude = ["migrations/", "tests/factories\\.py$"]
 
 [[tool.mypy.overrides]]
-module = ["environ.*", "factory.*", "uuid_utils.*"]
+module = ["environ.*", "factory.*", "uuid_utils.*", "boto3.*", "botocore.*"]
 ignore_missing_imports = true
 
 # Tests: fixtures make full annotation noisy; keep type checking on but allow untyped defs.

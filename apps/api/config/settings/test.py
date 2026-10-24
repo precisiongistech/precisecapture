@@ -43,3 +43,5 @@ CELERY_TASK_EAGER_PROPAGATES = True
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 STORAGES["default"] = {"BACKEND": "django.core.files.storage.InMemoryStorage"}
+# Attachment tests talk to a real S3-compatible store (MinIO locally, versitygw in CI).
+S3_BUCKET = env.str("S3_TEST_BUCKET", default="precisecapture-test")

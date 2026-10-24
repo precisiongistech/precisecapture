@@ -197,6 +197,8 @@ S3_ENDPOINT_URL = env.str("S3_ENDPOINT_URL", default="")
 S3_BUCKET = env.str("S3_BUCKET", default="")
 S3_REGION = env.str("S3_REGION", default="us-east-1")
 S3_PRESIGN_EXPIRY_SECONDS = env.int("S3_PRESIGN_EXPIRY_SECONDS", default=900)
+S3_ACCESS_KEY_ID = env.str("S3_ACCESS_KEY_ID", default="")
+S3_SECRET_ACCESS_KEY = env.str("S3_SECRET_ACCESS_KEY", default="")
 
 STORAGES = {
     "default": {
@@ -205,8 +207,8 @@ STORAGES = {
             "bucket_name": S3_BUCKET,
             "endpoint_url": S3_ENDPOINT_URL or None,
             "region_name": S3_REGION,
-            "access_key": env.str("S3_ACCESS_KEY_ID", default=""),
-            "secret_key": env.str("S3_SECRET_ACCESS_KEY", default=""),
+            "access_key": S3_ACCESS_KEY_ID,
+            "secret_key": S3_SECRET_ACCESS_KEY,
             "file_overwrite": False,
             "default_acl": None,
             "querystring_expire": S3_PRESIGN_EXPIRY_SECONDS,
